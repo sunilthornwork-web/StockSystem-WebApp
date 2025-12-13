@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stock System</title>
+  <style>
+    /* ใส่ Pink Glass Theme ที่เราล็อกไว้ */
+  </style>
+</head>
+<body>
+
+<header>Stock System</header>
+
+<main id="app"></main>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycby8s440W72bqx8khrsDZnCo0FQelouKbs8bdFoNfqDkUPfXwdshGg16K3sbJbxRKArf3A/exec";
+
+fetch(API + "?action=list")
+  .then(r => r.json())
+  .then(res => {
+    if (!res.ok) return;
+    renderProducts(res.data);
+  });
+
+function renderProducts(items) {
+  const app = document.getElementById("app");
+  app.innerHTML = items.map(p => `
+    <div class="card">
+      <img src="${p.image}">
+      <h3>${p.name}</h3>
+      <div>SKU: ${p.sku}</div>
+      <div>💰 ทุน: ฿${p.cost}</div>
+      <span class="badge">${p.status}</span>
+    </div>
+  `).join("");
+}
+</script>
+
+</body>
+</html>
