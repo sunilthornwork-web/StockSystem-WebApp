@@ -4,18 +4,242 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Stock System</title>
+
   <style>
-    /* ใส่ Pink Glass Theme ที่เราล็อกไว้ */
+  :root{
+    --pink-1:#ff6fae;
+    --pink-2:#ff9fcf;
+    --pink-3:#ffe1ef;
+    --glass-bg:rgba(255,255,255,.65);
+    --glass-br:rgba(255,255,255,.45);
+    --text-dark:#5a2240;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family: system-ui, -apple-system, "Noto Sans Thai", sans-serif;
+    color:var(--text-dark);
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #ffd6ea 0%, transparent 60%),
+      linear-gradient(135deg, #ffb3d9 0%, #ffe4f0 50%, #ffffff 100%);
+  }
+
+  header{
+    position:sticky; top:0; z-index:10;
+    padding:14px 16px;
+    font-weight:700;
+    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, rgba(255,255,255,.55), rgba(255,255,255,.25));
+    border-bottom:1px solid var(--glass-br);
+  }
+
+  #app{
+    padding:14px;
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap:12px;
+  }
+
+  .card{
+    background: linear-gradient(135deg, var(--glass-bg), rgba(255,255,255,.35));
+    backdrop-filter: blur(14px);
+    border:1px solid var(--glass-br);
+    border-radius:18px;
+    padding:10px;
+    box-shadow:
+      0 10px 28px rgba(255,111,174,.22),
+      inset 0 1px 0 rgba(255,255,255,.6);
+    transition: transform .15s ease;
+  }
+  .card:active{ transform: scale(.98); }
+
+  .card img{
+    width:100%;
+    aspect-ratio:1/1;
+    object-fit:cover;
+    border-radius:14px;
+    background:#fff;
+  }
+
+  .card h3{
+    font-size:14px;
+    margin:8px 0 2px;
+    line-height:1.25;
+  }
+  .meta{ font-size:12px; opacity:.85; }
+  .cost{ font-size:13px; font-weight:700; margin-top:4px; }
+
+  .badge{
+    display:inline-block;
+    margin-top:6px;
+    padding:4px 8px;
+    font-size:11px;
+    font-weight:700;
+    border-radius:999px;
+    color:#fff;
+    background: linear-gradient(135deg, var(--pink-1), #ff4f9a);
+    box-shadow: 0 6px 16px rgba(255,79,154,.35);
+  }
+
+  .empty{
+    grid-column:1/-1;
+    text-align:center;
+    padding:24px 8px;
+    opacity:.8;
+  }
+
+  @media (min-width:768px){
+    #app{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+  }
+    /* ===== Detail Page ===== */
+.detail{
+  padding:14px;
+}
+
+.back-btn{
+  display:inline-block;
+  margin-bottom:10px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.detail-card{
+  background: linear-gradient(135deg, var(--glass-bg), rgba(255,255,255,.35));
+  backdrop-filter: blur(16px);
+  border:1px solid var(--glass-br);
+  border-radius:20px;
+  padding:14px;
+  box-shadow:
+    0 14px 32px rgba(255,111,174,.25),
+    inset 0 1px 0 rgba(255,255,255,.6);
+}
+
+.detail-card img{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  border-radius:16px;
+  margin-bottom:12px;
+}
+
+.detail-title{
+  font-size:18px;
+  font-weight:700;
+}
+
+.detail-meta{
+  font-size:13px;
+  opacity:.85;
+  margin-top:4px;
+}
+
+.detail-cost{
+  margin-top:8px;
+  font-size:16px;
+  font-weight:700;
+}
+
+.detail-status{
+  margin-top:10px;
+}
+
+    /* ===== Admin ===== */
+.admin-bar{
+  position:fixed;
+  bottom:16px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:20;
+}
+
+.stock-btn{
+  padding:14px 20px;
+  font-size:16px;
+  font-weight:700;
+  border-radius:999px;
+  border:1px solid var(--glass-br);
+  background: linear-gradient(135deg, var(--pink-1), #ff4f9a);
+  color:#fff;
+  box-shadow:0 14px 32px rgba(255,79,154,.45);
+  cursor:pointer;
+}
+
+/* ===== Modal ===== */
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+  display:flex;
+  align-items:flex-end;
+  z-index:30;
+}
+
+.modal{
+  width:100%;
+  background: linear-gradient(135deg, var(--glass-bg), rgba(255,255,255,.35));
+  border-radius:24px 24px 0 0;
+  padding:20px;
+  box-shadow:0 -20px 40px rgba(0,0,0,.25);
+}
+
+.modal h3{
+  margin:0 0 12px;
+}
+
+.modal button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  font-size:15px;
+  font-weight:700;
+  border-radius:14px;
+  border:0;
+  cursor:pointer;
+}
+
+.btn-in{ background:#4caf50; color:#fff; }
+.btn-out{ background:#ff4f9a; color:#fff; }
+.btn-close{ background:#ccc; }
+
   </style>
 </head>
 <body>
 
 <header>Stock System</header>
 
+<div id="adminLogin" style="padding:14px;">
+  <button onclick="enterAdmin()">🔐 เข้าโหมดแอดมิน</button>
+</div>
+
 <main id="app"></main>
+
+<!-- 🔘 ปุ่มลอยแอดมิน -->
+<div id="adminBar" class="admin-bar" style="display:none">
+  <button class="stock-btn" onclick="openStockModal()">📦 จัดการสต๊อก</button>
+</div>
+
+<!-- 🧾 Modal (อยู่นอก adminBar) -->
+<div id="stockModal" class="modal-bg" style="display:none">
+  <div class="modal">
+    <h3>📦 จัดการสต๊อก</h3>
+
+    <button class="btn-in" onclick="stockIn()">➕ รับเข้าสินค้า</button>
+    <button class="btn-out" onclick="stockOut()">➖ ส่งออกสินค้า</button>
+
+    <button class="btn-close" onclick="closeStockModal()">ปิด</button>
+  </div>
+</div>
+
+
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycby8s440W72bqx8khrsDZnCo0FQelouKbs8bdFoNfqDkUPfXwdshGg16K3sbJbxRKArf3A/exec";
+  let currentProduct = null;
+
 
 fetch(API + "?action=list")
   .then(r => r.json())
@@ -26,16 +250,116 @@ fetch(API + "?action=list")
 
 function renderProducts(items) {
   const app = document.getElementById("app");
+
+  if (!items || items.length === 0) {
+    app.innerHTML = `<div class="empty">ยังไม่มีสินค้าในระบบ</div>`;
+    return;
+  }
+
   app.innerHTML = items.map(p => `
-    <div class="card">
-      <img src="${p.image}">
+    <div class="card" onclick='openDetail(${JSON.stringify(p)})'>
+      <img src="${p.image || 'https://via.placeholder.com/300'}" alt="">
       <h3>${p.name}</h3>
-      <div>SKU: ${p.sku}</div>
-      <div>💰 ทุน: ฿${p.cost}</div>
+      <div class="meta">SKU: ${p.sku}</div>
+      <div class="cost">💰 ทุน: ฿${p.cost}</div>
       <span class="badge">${p.status}</span>
     </div>
   `).join("");
 }
+
+  function openDetail(p){
+    currentProduct = p;
+  const app = document.getElementById("app");
+
+  app.innerHTML = `
+    <div class="detail">
+
+      <div class="back-btn" onclick="goBack()">← กลับ</div>
+
+      <div class="detail-card">
+        <img src="${p.image || 'https://via.placeholder.com/300'}" alt="">
+
+        <div class="detail-title">${p.name}</div>
+        <div class="detail-meta">SKU: ${p.sku}</div>
+
+        <div class="detail-cost">💰 ราคาทุน: ฿${p.cost}</div>
+
+        <div class="detail-status">
+          <span class="badge">${p.status}</span>
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+  
+  function goBack(){
+  fetch(API + "?action=list")
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok) return;
+      renderProducts(res.data);
+    });
+}
+
+  let isAdmin = false;
+
+function enterAdmin(){
+  isAdmin = true;
+  document.getElementById("adminBar").style.display = "block";
+  alert("เข้าสู่โหมดแอดมินแล้ว");
+}
+
+function openStockModal(){
+  document.getElementById("stockModal").style.display = "flex";
+}
+
+function closeStockModal(){
+  document.getElementById("stockModal").style.display = "none";
+}
+
+/* ตัวอย่าง placeholder */
+function stockIn(){
+  if (!currentProduct) {
+    alert("กรุณาเลือกสินค้าก่อน");
+    return;
+  }
+
+  const qty = parseInt(prompt("รับเข้าสินค้าจำนวนเท่าไหร่?"), 10);
+  if (!qty || qty <= 0) return;
+
+  updateStock(currentProduct.sku, qty);
+}
+
+function stockOut(){
+  if (!currentProduct) {
+    alert("กรุณาเลือกสินค้าก่อน");
+    return;
+  }
+
+  const qty = parseInt(prompt("ส่งออกสินค้าจำนวนเท่าไหร่?"), 10);
+  if (!qty || qty <= 0) return;
+
+  updateStock(currentProduct.sku, -qty);
+}
+
+  function updateStock(sku, delta){
+  fetch(`${API}?action=updateStock&sku=${encodeURIComponent(sku)}&delta=${delta}`)
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok) {
+        alert("อัปเดตสต๊อกไม่สำเร็จ");
+        return;
+      }
+
+      alert("อัปเดตสต๊อกเรียบร้อย");
+      closeStockModal();
+      goBack(); // reload list
+    });
+}
+
+
+
 </script>
 
 </body>
