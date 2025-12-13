@@ -124,68 +124,98 @@
   <div id="app"></div>
 
   <!-- ========================= -->
-  <!-- GLOBAL STATE -->
-  <!-- ========================= -->
-  <script>
-    const state = {
-      mode: 'viewer', // viewer | admin
-      token: null,
-      products: [],
-      loading: false,
-      error: null
-    };
-  </script>
+<!-- GLOBAL STATE -->
+<!-- ========================= -->
+<script>
+  const state = {
+    mode: 'viewer',      // viewer | admin
+    token: null,
+    products: [],
+    loading: false,
+    error: null
+  };
+</script>
 
   <!-- ========================= -->
-  <!-- STATE INIT -->
-  <!-- ========================= -->
-  <script>
-    function initState() {
-      const savedToken = localStorage.getItem('admin_token');
-      if (savedToken) {
-        state.mode = 'admin';
-        state.token = savedToken;
-      } else {
-        state.mode = 'viewer';
-      }
+<!-- STATE INIT -->
+<!-- ========================= -->
+<script>
+  function initState() {
+    const savedToken = localStorage.getItem('admin_token');
+
+    if (savedToken) {
+      state.mode = 'admin';
+      state.token = savedToken;
+    } else {
+      state.mode = 'viewer';
+      state.token = null;
     }
-  </script>
+  }
+
+  function logoutAdmin() {
+    localStorage.removeItem('admin_token');
+    state.mode = 'viewer';
+    state.token = null;
+    renderUI();
+  }
+</script>
+
 
   <!-- ========================= -->
-  <!-- RENDER FUNCTIONS -->
-  <!-- ========================= -->
-  <script>
-    function renderUI() {
-      const app = document.getElementById('app');
-      app.innerHTML = '';
+<!-- RENDER FUNCTIONS -->
+<!-- ========================= -->
+<script>
+  function renderUI() {
+    const app = document.getElementById('app');
+    app.innerHTML = '';
 
-      if (state.mode === 'viewer') {
-        renderViewer(app);
-      }
-
-      if (state.mode === 'admin') {
-        renderAdmin(app);
-      }
-    }
-
-    function renderViewer(root) {
-      const div = document.createElement('div');
-      div.innerHTML = `
-        <h1>📦 StockBuilder</h1>
-        <p>Viewer Mode</p>
-      `;
-      root.appendChild(div);
+    if (state.mode === 'viewer') {
+      renderViewer(app);
     }
 
-    function renderAdmin(root) {
-      const div = document.createElement('div');
-      div.innerHTML = `
-        <h1>🔐 Admin Dashboard</h1>
-        <p>Admin Mode</p>
-      `;
-      root.appendChild(div);
+    if (state.mode === 'admin') {
+      renderAdmin(app);
     }
-  </script>
+  }
+
+  function renderViewer(root) {
+    const header = document.createElement('div');
+    header.className = 'header';
+    header.innerHTML = `
+      <h1>📦 StockBuilder</h1>
+      <span class="badge">Viewer</span>
+    `;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <p>ระบบจัดการสต๊อกสินค้า</p>
+      <p>โหมดผู้ใช้งานทั่วไป</p>
+    `;
+
+    root.appendChild(header);
+    root.appendChild(card);
+  }
+
+  function renderAdmin(root) {
+    const header = document.createElement('div');
+    header.className = 'header';
+    header.innerHTML = `
+      <h1>🔐 Admin Dashboard</h1>
+      <button onclick="logoutAdmin()" class="badge">Logout</button>
+    `;
+
+    const card = document.createElement('div');
+    card.className = 'card admin';
+    card.innerHTML = `
+      <p>คุณอยู่ในโหมดผู้ดูแลระบบ</p>
+      <p>เตรียมจัดการสินค้า / สต๊อก</p>
+    `;
+
+    root.appendChild(header);
+    root.appendChild(card);
+  }
+</script>
 
   <!-- ========================= -->
   <!-- APP START -->
