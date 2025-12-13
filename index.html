@@ -366,6 +366,36 @@ function renderProducts(items){
   `).join("");
 }
 
+  let newImageUrl = "";
+
+function uploadNewProductImage(){
+  const input = document.getElementById("newImageInput");
+  if (!input.files.length) return;
+
+  const file = input.files[0];
+  if (!file.type.startsWith("image/")) {
+    alert("กรุณาเลือกไฟล์รูปภาพ");
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("sku", newSku.value || ("TMP_" + Date.now()));
+
+  fetch(API + "?action=uploadimage", {
+    method: "POST",
+    body: fd
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.ok) return alert("อัปโหลดรูปไม่สำเร็จ");
+
+    newImageUrl = res.image;
+    newImagePreview.src = res.image;
+    newImagePreview.style.display = "block";
+  });
+}
+
 /* ===== DETAIL + UPLOAD ===== */
 function openDetail(p){
   currentProduct = p;
@@ -615,19 +645,32 @@ function closeAddProductModal(){
   addProductModal.style.display = "none";
 }
 
-/* เพิ่มสินค้าแบบ Draft */
 function confirmAddProduct(){
   const sku = newSku.value.trim();
   const name = newName.value.trim();
   const cost = newCost.value || 0;
+  const category = newCategory.value;
+  const status = newStatus.value;
   const note = newNote.value || "";
+  const image = newImageUrl || "";
 
   if (!sku || !name) {
-    alert("กรุณากรอก SKU และชื่อสินค้า");
+    alert("กรุณากรอก รหัสสินค้า และ ชื่อสินค้า");
     return;
   }
 
-  fetch(`${API}?action=addproduct&sku=${encodeURIComponent(sku)}&name=${encodeURIComponent(name)}&cost=${cost}&note=${encodeURIComponent(note)}`)
+  const params = new URLSearchParams({
+    action: "addproduct",
+    sku,
+    name,
+    cost,
+    category,
+    status,
+    note,
+    image
+  });
+
+  fetch(API + "?" + params.toString())
     .then(r => r.json())
     .then(res => {
       if (!res.ok) {
@@ -635,36 +678,68 @@ function confirmAddProduct(){
         return;
       }
 
-      alert("เพิ่มสินค้าใหม่ (Draft) สำเร็จ");
+      alert("เพิ่มสินค้าเรียบร้อย ✅");
+      newImageUrl = "";
       closeAddProductModal();
-      goBack(); // reload list
+      loadProducts();
     });
 }
 
 </script>
-  <!-- 🆕 Modal เพิ่มสินค้า -->
+  <!-- 🆕 OPTION B : Modal เพิ่มสินค้าเต็ม -->
 <div id="addProductModal" class="modal-bg" style="display:none">
   <div class="modal">
 
     <h3>➕ เพิ่มสินค้าใหม่</h3>
 
-    <input id="newSku" placeholder="SKU (เช่น SKU002)"
-      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:10px">
+    <input id="newSku" placeholder="รหัสสินค้า (SKU)"
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:8px">
 
     <input id="newName" placeholder="ชื่อสินค้า"
-      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:10px">
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:8px">
 
     <input id="newCost" type="number" placeholder="ราคาทุน"
-      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:10px">
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:8px">
+
+    <!-- หมวด -->
+    <select id="newCategory"
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:8px">
+      <option value="">— เลือกหมวดสินค้า —</option>
+      <option value="อุปกรณ์เสริม">อุปกรณ์เสริม</option>
+      <option value="อะไหล่">อะไหล่</option>
+      <option value="สินค้าใหม่">สินค้าใหม่</option>
+    </select>
+
+    <!-- สถานะ -->
+    <select id="newStatus"
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:8px">
+      <option value="Draft">Draft (ยังไม่ขาย)</option>
+      <option value="พร้อมส่ง">พร้อมส่ง</option>
+      <option value="หมด">หมด</option>
+    </select>
+
+    <!-- Upload Image -->
+    <input type="file" id="newImageInput" accept="image/*" hidden
+      onchange="uploadNewProductImage()">
+
+    <button class="stock-btn"
+      style="width:100%;padding:12px;font-size:14px;margin-bottom:6px"
+      onclick="document.getElementById('newImageInput').click()">
+      📷 อัปโหลดรูปสินค้า
+    </button>
+
+    <img id="newImagePreview"
+      style="width:100%;border-radius:12px;display:none;margin-bottom:8px">
 
     <textarea id="newNote" placeholder="หมายเหตุ (ถ้ามี)"
-      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd"></textarea>
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:8px"></textarea>
 
-    <button class="btn-in" onclick="confirmAddProduct()">💾 บันทึก (Draft)</button>
+    <button class="btn-in" onclick="confirmAddProduct()">💾 บันทึกสินค้า</button>
     <button class="btn-close" onclick="closeAddProductModal()">ยกเลิก</button>
 
   </div>
 </div>
+
 
 </body>
 </html>
