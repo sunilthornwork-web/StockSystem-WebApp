@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StockBuilder</title>
-
+</head>
+  <body>
   <!-- ========================= -->
 <!-- UI STYLE (STEP 2) -->
 <!-- ========================= -->
@@ -123,18 +124,32 @@
   <!-- ========================= -->
   <div id="app"></div>
 
-  <!-- ========================= -->
+<!-- ========================= -->
 <!-- GLOBAL STATE -->
 <!-- ========================= -->
 <script>
   const state = {
-    mode: 'viewer',      // viewer | admin
+    mode: 'viewer',
     token: null,
-    products: [],
+
+    products: [],        // สินค้าทั้งหมดจาก API
+    filteredProducts: [],// สินค้าที่ผ่าน filter
+
+    search: '',
+    category: 'all',
+
     loading: false,
     error: null
   };
 </script>
+
+  <!-- ========================= -->
+<!-- API CONFIG -->
+<!-- ========================= -->
+<script>
+  const API_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+</script>
+
 
   <!-- ========================= -->
 <!-- STATE INIT -->
@@ -160,6 +175,65 @@
   }
 </script>
 
+<!-- ========================= -->
+<!-- API FUNCTIONS -->
+<!-- ========================= -->
+<script>
+  async function apiRequest(action, payload = {}) {
+    state.loading = true;
+    state.error = null;
+    renderUI();
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          token: state.token,
+          payload
+        })
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'API Error');
+      }
+
+      return data.data;
+    } catch (err) {
+      state.error = err.message;
+      console.error(err);
+      return null;
+    } finally {
+      state.loading = false;
+      renderUI();
+    }
+  }
+
+  /* ===== API WRAPPERS ===== */
+
+  function apiListProducts() {
+    return apiRequest('list');
+  }
+
+  function apiLogin(username, password) {
+    return apiRequest('login', { username, password });
+  }
+
+  function apiAddProduct(product) {
+    return apiRequest('add', product);
+  }
+
+  function apiUpdateProduct(product) {
+    return apiRequest('update', product);
+  }
+
+  function apiUpdateStock(code, diff) {
+    return apiRequest('updateStock', { code, diff });
+  }
+</script>
 
   <!-- ========================= -->
 <!-- RENDER FUNCTIONS -->
@@ -178,6 +252,8 @@
     }
   }
 
+  /* ===== VIEWER ===== */
+
   function renderViewer(root) {
     const header = document.createElement('div');
     header.className = 'header';
@@ -186,16 +262,124 @@
       <span class="badge">Viewer</span>
     `;
 
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <p>ระบบจัดการสต๊อกสินค้า</p>
-      <p>โหมดผู้ใช้งานทั่วไป</p>
+    const searchCard = document.createElement('div');
+    searchCard.className = 'card';
+    searchCard.innerHTML = `
+      <input
+        placeholder="ค้นหาสินค้า..."
+        value="${state.search}"
+        oninput="onSearch(this.value)"
+        style="width:100%;padding:10px;border-radius:12px;border:none;"
+      />
+
+      <select
+        onchange="onFilterCategory(this.value)"
+        style="width:100%;margin-top:10px;padding:10px;border-radius:12px;border:none;"
+      >
+        <option value="all">ทุกหมวด</option>
+        ${renderCategoryOptions()}
+      </select>
     `;
 
     root.appendChild(header);
-    root.appendChild(card);
+    root.appendChild(searchCard);
+
+    if (state.loading) {
+      root.appendChild(renderLoading());
+      return;
+    }
+
+    if (state.error) {
+      root.appendChild(renderError());
+      return;
+    }
+
+    root.appendChild(renderProductGrid());
   }
+
+  function renderProductGrid() {
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+
+    if (state.filteredProducts.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'card';
+      empty.innerHTML = `<p>ไม่พบสินค้า</p>`;
+      return empty;
+    }
+
+    state.filteredProducts.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.innerHTML = `
+        <div class="product-img"></div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-price">฿${p.price}</div>
+      `;
+      grid.appendChild(card);
+    });
+
+    return grid;
+  }
+
+  function renderCategoryOptions() {
+    if (state.products.length === 0) return '';
+    const categories = [...new Set(state.products.map(p => p.category))];
+    return categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  function renderLoading() {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `<p>⏳ กำลังโหลดสินค้า...</p>`;
+    return div;
+  }
+
+  function renderError() {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `<p>❌ ${state.error}</p>`;
+    return div;
+  }
+
+  /* ===== VIEWER LOGIC ===== */
+
+  async function loadProductsOnce() {
+    if (state.products.length > 0) return;
+
+    const data = await apiListProducts();
+    if (!data) return;
+
+    state.products = data;
+    applyFilter();
+    renderUI();
+  }
+
+  function applyFilter() {
+    state.filteredProducts = state.products.filter(p => {
+      const matchSearch =
+        p.name.toLowerCase().includes(state.search.toLowerCase());
+
+      const matchCategory =
+        state.category === 'all' || p.category === state.category;
+
+      return matchSearch && matchCategory;
+    });
+  }
+
+  function onSearch(value) {
+    state.search = value;
+    applyFilter();
+    renderUI();
+  }
+
+  function onFilterCategory(value) {
+    state.category = value;
+    applyFilter();
+    renderUI();
+  }
+
+  /* ===== ADMIN (ยังไม่แตะ) ===== */
 
   function renderAdmin(root) {
     const header = document.createElement('div');
@@ -208,8 +392,8 @@
     const card = document.createElement('div');
     card.className = 'card admin';
     card.innerHTML = `
-      <p>คุณอยู่ในโหมดผู้ดูแลระบบ</p>
-      <p>เตรียมจัดการสินค้า / สต๊อก</p>
+      <p>โหมดผู้ดูแลระบบ</p>
+      <p>STEP 6 จะเริ่มตรงนี้</p>
     `;
 
     root.appendChild(header);
@@ -218,12 +402,14 @@
 </script>
 
   <!-- ========================= -->
-  <!-- APP START -->
-  <!-- ========================= -->
-  <script>
-    initState();
-    renderUI();
-  </script>
+<!-- APP START -->
+<!-- ========================= -->
+<script>
+  initState();
+  renderUI();
+  loadProductsOnce(); // 👈 โหลดสินค้าแค่ครั้งเดียว
+</script>
+
 
 </body>
 </html>
