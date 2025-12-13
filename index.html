@@ -331,13 +331,22 @@ const API = "https://script.google.com/macros/s/AKfycby8s440W72bqx8khrsDZnCo0FQe
 let currentProduct = null;
 
 /* ===== LOAD PRODUCTS ===== */
-fetch(API + "?action=list")
-  .then(r => r.json())
-  .then(res => res.ok && renderProducts(res.data));
+function loadProducts(){
+  const isAdmin = localStorage.getItem("isAdmin") === "1";
+  const url = API + "?action=list" + (isAdmin ? "&admin=1" : "");
 
+  fetch(url)
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok) return;
+      renderProducts(res.data);
+    });
+}
+
+loadProducts();
 applyAdminSession();
 
-/* ===== LIST ===== */
+  /* ===== LIST ===== */
 function renderProducts(items){
   const app = document.getElementById("app");
 
@@ -573,7 +582,9 @@ function renderLogs(logs){
 }
 
 /* ===== NAV ===== */
-function goBack(){ fetch(API+"?action=list").then(r=>r.json()).then(res=>renderProducts(res.data)); }
+function goBack(){
+  loadProducts();
+}
 
 /* ===== ADMIN ===== */
 function loginAdmin(){
