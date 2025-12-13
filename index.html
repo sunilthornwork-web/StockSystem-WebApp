@@ -204,6 +204,41 @@
 .btn-in{ background:#4caf50; color:#fff; }
 .btn-out{ background:#ff4f9a; color:#fff; }
 .btn-close{ background:#ccc; }
+/* ===== Logs View (STEP 9.2-B) ===== */
+.logs{
+  padding:14px;
+}
+
+.log-item{
+  background: linear-gradient(135deg, var(--glass-bg), rgba(255,255,255,.35));
+  border:1px solid var(--glass-br);
+  border-radius:16px;
+  padding:12px;
+  margin-bottom:10px;
+  font-size:13px;
+  box-shadow:0 8px 20px rgba(255,111,174,.18);
+}
+
+.log-item .row{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:4px;
+}
+
+.log-in{
+  color:#2e7d32;
+  font-weight:700;
+}
+
+.log-out{
+  color:#c62828;
+  font-weight:700;
+}
+
+.log-time{
+  font-size:11px;
+  opacity:.7;
+}
 
   </style>
 </head>
@@ -211,31 +246,57 @@
 
 <header>Stock System</header>
 
-<div id="adminLogin" style="padding:14px;">
-  <button onclick="enterAdmin()">🔐 เข้าโหมดแอดมิน</button>
+<div id="adminLogin" style="padding:14px; display:none">
+  <input id="adminId" placeholder="Admin ID" style="padding:8px; width:120px">
+  <input id="adminPw" type="password" placeholder="Password" style="padding:8px; width:120px">
+  <button onclick="loginAdmin()">🔐 Login</button>
 </div>
+
+<div id="adminLogout" style="padding:14px; display:none">
+  <button onclick="logoutAdmin()">🚪 Logout</button>
+</div>
+
 
 <main id="app"></main>
 
 <!-- 🔘 ปุ่มลอยแอดมิน -->
 <div id="adminBar" class="admin-bar" style="display:none">
   <button class="stock-btn" onclick="openStockModal()">📦 จัดการสต๊อก</button>
+  <button class="stock-btn" style="margin-left:8px" onclick="openLogs()">📊 ดูประวัติ</button>
 </div>
 
 <!-- 🧾 Modal (อยู่นอก adminBar) -->
 <div id="stockModal" class="modal-bg" style="display:none">
   <div class="modal">
+
     <h3>📦 จัดการสต๊อก</h3>
 
-    <button class="btn-in" onclick="stockIn()">➕ รับเข้าสินค้า</button>
-    <button class="btn-out" onclick="stockOut()">➖ ส่งออกสินค้า</button>
+    <div id="stockInfo" style="font-size:14px; margin-bottom:10px;"></div>
+
+    <input
+      id="stockQty"
+      type="number"
+      min="1"
+      placeholder="จำนวน"
+      style="
+        width:100%;
+        padding:14px;
+        font-size:16px;
+        border-radius:14px;
+        border:1px solid #ddd;
+        margin-bottom:12px;
+      "
+    >
+
+    <button class="btn-in" onclick="confirmStockIn()">➕ รับเข้า</button>
+    <button class="btn-out" onclick="confirmStockOut()">➖ ส่งออก</button>
 
     <button class="btn-close" onclick="closeStockModal()">ปิด</button>
+    
   </div>
 </div>
 
-
-
+  
 <script>
 const API = "https://script.google.com/macros/s/AKfycby8s440W72bqx8khrsDZnCo0FQelouKbs8bdFoNfqDkUPfXwdshGg16K3sbJbxRKArf3A/exec";
   let currentProduct = null;
@@ -248,6 +309,8 @@ fetch(API + "?action=list")
     renderProducts(res.data);
   });
 
+  applyAdminSession();
+
 function renderProducts(items) {
   const app = document.getElementById("app");
 
@@ -256,7 +319,13 @@ function renderProducts(items) {
     return;
   }
 
-  app.innerHTML = items.map(p => `
+  // 🔐 normalize data กัน stock เป็น undefined
+  const safeItems = items.map(p => ({
+    ...p,
+    stock: parseInt(p.stock, 10) || 0
+  }));
+
+  app.innerHTML = safeItems.map(p => `
     <div class="card" onclick='openDetail(${JSON.stringify(p)})'>
       <img src="${p.image || 'https://via.placeholder.com/300'}" alt="">
       <h3>${p.name}</h3>
@@ -266,6 +335,7 @@ function renderProducts(items) {
     </div>
   `).join("");
 }
+
 
   function openDetail(p){
     currentProduct = p;
@@ -294,6 +364,7 @@ function renderProducts(items) {
 }
   
   function goBack(){
+  currentProduct = null; // 🔴 reset สินค้าที่เลือก
   fetch(API + "?action=list")
     .then(r => r.json())
     .then(res => {
@@ -302,43 +373,39 @@ function renderProducts(items) {
     });
 }
 
-  let isAdmin = false;
-
-function enterAdmin(){
-  isAdmin = true;
-  document.getElementById("adminBar").style.display = "block";
-  alert("เข้าสู่โหมดแอดมินแล้ว");
-}
-
 function openStockModal(){
-  document.getElementById("stockModal").style.display = "flex";
-}
-
-function closeStockModal(){
-  document.getElementById("stockModal").style.display = "none";
-}
-
-/* ตัวอย่าง placeholder */
-function stockIn(){
   if (!currentProduct) {
     alert("กรุณาเลือกสินค้าก่อน");
     return;
   }
 
-  const qty = parseInt(prompt("รับเข้าสินค้าจำนวนเท่าไหร่?"), 10);
-  if (!qty || qty <= 0) return;
+  document.getElementById("stockQty").value = "";
+
+  document.getElementById("stockInfo").innerHTML = `
+    <b>${currentProduct.name}</b><br>
+    SKU: ${currentProduct.sku}<br>
+    สต๊อกปัจจุบัน: ${currentProduct.stock}
+  `;
+
+  document.getElementById("stockModal").style.display = "flex";
+}
+
+function confirmStockIn(){
+  const qty = parseInt(document.getElementById("stockQty").value, 10);
+  if (!qty || qty <= 0) {
+    alert("กรุณาใส่จำนวนที่ถูกต้อง");
+    return;
+  }
 
   updateStock(currentProduct.sku, qty);
 }
 
-function stockOut(){
-  if (!currentProduct) {
-    alert("กรุณาเลือกสินค้าก่อน");
+function confirmStockOut(){
+  const qty = parseInt(document.getElementById("stockQty").value, 10);
+  if (!qty || qty <= 0) {
+    alert("กรุณาใส่จำนวนที่ถูกต้อง");
     return;
   }
-
-  const qty = parseInt(prompt("ส่งออกสินค้าจำนวนเท่าไหร่?"), 10);
-  if (!qty || qty <= 0) return;
 
   updateStock(currentProduct.sku, -qty);
 }
@@ -356,6 +423,85 @@ function stockOut(){
       closeStockModal();
       goBack(); // reload list
     });
+}
+
+  // ===== ADMIN SESSION =====
+function loginAdmin(){
+  const id = document.getElementById("adminId").value;
+  const pw = document.getElementById("adminPw").value;
+
+  fetch(`${API}?action=login&id=${encodeURIComponent(id)}&password=${encodeURIComponent(pw)}`)
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok) {
+        alert("Login ไม่สำเร็จ");
+        return;
+      }
+
+      localStorage.setItem("isAdmin", "1");
+      alert("Login สำเร็จ");
+      applyAdminSession();
+    });
+}
+
+function logoutAdmin(){
+  localStorage.removeItem("isAdmin");
+  alert("ออกจากระบบแล้ว");
+  applyAdminSession();
+}
+
+function applyAdminSession(){
+  const isAdmin = localStorage.getItem("isAdmin") === "1";
+
+  document.getElementById("adminLogin").style.display = isAdmin ? "none" : "block";
+  document.getElementById("adminLogout").style.display = isAdmin ? "block" : "none";
+  document.getElementById("adminBar").style.display = isAdmin ? "block" : "none";
+}
+
+  function openLogs(){
+  fetch(API + "?action=getlogs")
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok) {
+        alert("โหลดประวัติไม่สำเร็จ");
+        return;
+      }
+
+      renderLogs(res.data);
+    });
+}
+
+function renderLogs(logs){
+  const app = document.getElementById("app");
+
+  if (!logs || logs.length === 0) {
+    app.innerHTML = `<div class="empty">ยังไม่มีประวัติการทำรายการ</div>`;
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="logs">
+      <div class="back-btn" onclick="goBack()">← กลับ</div>
+
+      ${logs.map(l => `
+        <div class="log-item">
+          <div class="row">
+            <div><b>${l.name}</b> (${l.sku})</div>
+            <div class="${l.action === 'IN' ? 'log-in' : 'log-out'}">
+              ${l.action === 'IN' ? 'รับเข้า +' : 'ส่งออก -'}${l.delta}
+            </div>
+          </div>
+
+          <div class="row">
+            <div>คงเหลือ: ${l.stock_after}</div>
+            <div class="log-time">
+              ${new Date(l.timestamp).toLocaleString()}
+            </div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
 }
 
 
