@@ -289,7 +289,8 @@
 
 <!-- 🔘 ปุ่มลอยแอดมิน -->
 <div id="adminBar" class="admin-bar" style="display:none">
-  <button class="stock-btn" onclick="openStockModal()">📦 จัดการสต๊อก</button>
+  <button class="stock-btn" onclick="openAddProductModal()">➕ เพิ่มสินค้า</button>
+  <button class="stock-btn" style="margin-left:8px" onclick="openStockModal()">📦 จัดการสต๊อก</button>
   <button class="stock-btn" style="margin-left:8px" onclick="openLogs()">📊 ดูประวัติ</button>
 </div>
 
@@ -594,6 +595,65 @@ function applyAdminSession(){
   adminLogout.style.display = a?"block":"none";
   adminBar.style.display = a?"block":"none";
 }
+  /* ===== ADD PRODUCT ===== */
+function openAddProductModal(){
+  addProductModal.style.display = "flex";
+}
+
+function closeAddProductModal(){
+  addProductModal.style.display = "none";
+}
+
+/* เพิ่มสินค้าแบบ Draft */
+function confirmAddProduct(){
+  const sku = newSku.value.trim();
+  const name = newName.value.trim();
+  const cost = newCost.value || 0;
+  const note = newNote.value || "";
+
+  if (!sku || !name) {
+    alert("กรุณากรอก SKU และชื่อสินค้า");
+    return;
+  }
+
+  fetch(`${API}?action=addproduct&sku=${encodeURIComponent(sku)}&name=${encodeURIComponent(name)}&cost=${cost}&note=${encodeURIComponent(note)}`)
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok) {
+        alert(res.error || "เพิ่มสินค้าไม่สำเร็จ");
+        return;
+      }
+
+      alert("เพิ่มสินค้าใหม่ (Draft) สำเร็จ");
+      closeAddProductModal();
+      goBack(); // reload list
+    });
+}
+
 </script>
+  <!-- 🆕 Modal เพิ่มสินค้า -->
+<div id="addProductModal" class="modal-bg" style="display:none">
+  <div class="modal">
+
+    <h3>➕ เพิ่มสินค้าใหม่</h3>
+
+    <input id="newSku" placeholder="SKU (เช่น SKU002)"
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:10px">
+
+    <input id="newName" placeholder="ชื่อสินค้า"
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:10px">
+
+    <input id="newCost" type="number" placeholder="ราคาทุน"
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd;margin-bottom:10px">
+
+    <textarea id="newNote" placeholder="หมายเหตุ (ถ้ามี)"
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #ddd"></textarea>
+
+    <button class="btn-in" onclick="confirmAddProduct()">💾 บันทึก (Draft)</button>
+    <button class="btn-close" onclick="closeAddProductModal()">ยกเลิก</button>
+
+  </div>
+</div>
+
 </body>
 </html>
