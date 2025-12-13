@@ -132,16 +132,20 @@
     mode: 'viewer',
     token: null,
 
-    products: [],        // สินค้าทั้งหมดจาก API
-    filteredProducts: [],// สินค้าที่ผ่าน filter
+    products: [],
+    filteredProducts: [],
 
     search: '',
     category: 'all',
 
     loading: false,
-    error: null
+    error: null,
+
+    submitting: false,   // 🔒 กันกดซ้ำ
+    logs: []              // 🧾 เก็บ log ฝั่งหน้า
   };
 </script>
+
 
   <!-- ========================= -->
 <!-- API CONFIG -->
@@ -281,10 +285,122 @@
   }
 </script>
 
+    <!-- ===== PRODUCTION HELPERS ===== -->
+<script>
+  function validateProduct(p) {
+    if (!p.code) return 'ไม่มีรหัสสินค้า';
+    if (!p.name) return 'ไม่มีชื่อสินค้า';
+    if (isNaN(p.price) || p.price < 0) return 'ราคาผิด';
+    if (isNaN(p.stock)) return 'สต๊อกผิด';
+    if (!p.category) return 'ไม่มีหมวด';
+    return null;
+  }
+
+  function logAction(action, payload) {
+    const log = {
+      time: new Date().toISOString(),
+      action,
+      payload
+    };
+    state.logs.push(log);
+    console.log('LOG:', log);
+    // STEP 9: ถ้าต้องการส่ง backend → เพิ่ม apiRequest('log', log)
+  }
+</script>
+
 <!-- ========================= -->
 <!-- RENDER FUNCTIONS -->
 <!-- ========================= -->
 <script>
+  /* =========================
+     VIEWER SUPPORT
+  ========================= */
+
+  async function loadProducts() {
+    const data = await apiListProducts();
+    if (!data) return;
+    state.products = data;
+    applyFilter();
+    renderUI();
+  }
+
+  function applyFilter() {
+    state.filteredProducts = state.products.filter(p => {
+      const matchSearch =
+        p.name.toLowerCase().includes(state.search.toLowerCase());
+      const matchCategory =
+        state.category === 'all' || p.category === state.category;
+      return matchSearch && matchCategory;
+    });
+  }
+
+  function onSearch(value) {
+    state.search = value;
+    applyFilter();
+    renderUI();
+  }
+
+  function onFilterCategory(value) {
+    state.category = value;
+    applyFilter();
+    renderUI();
+  }
+
+  function renderCategoryOptions() {
+    const categories = [...new Set(state.products.map(p => p.category))];
+    return categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  /* =========================
+     ADMIN LOGIN
+  ========================= */
+
+  function renderAdminLogin() {
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+
+    const header = document.createElement('div');
+    header.className = 'header';
+    header.innerHTML = `
+      <h1>🔐 Admin Login</h1>
+      <button class="badge" onclick="renderUI()">Back</button>
+    `;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <input id="login-user" placeholder="Username"
+        style="width:100%;padding:10px;margin-bottom:8px;" />
+      <input id="login-pass" type="password" placeholder="Password"
+        style="width:100%;padding:10px;margin-bottom:8px;" />
+      <button onclick="submitLogin()"
+        style="width:100%;padding:12px;background:#38bdf8;">
+        Login
+      </button>
+    `;
+
+    app.appendChild(header);
+    app.appendChild(card);
+  }
+
+  async function submitLogin() {
+    const u = document.getElementById('login-user').value;
+    const p = document.getElementById('login-pass').value;
+
+    if (!u || !p) {
+      alert('กรอก username และ password');
+      return;
+    }
+
+    const data = await apiLogin(u, p);
+    if (!data) return;
+
+    localStorage.setItem('admin_token', data.token);
+    state.token = data.token;
+    state.mode = 'admin';
+    renderUI();
+  }
+
   /* =========================
      MAIN RENDER
   ========================= */
@@ -295,6 +411,10 @@
 
     if (state.mode === 'viewer') renderViewer(app);
     if (state.mode === 'admin') renderAdmin(app);
+
+    if (state.loading || state.submitting) {
+      renderOverlay(app);
+    }
   }
 
   /* =========================
@@ -397,18 +517,35 @@
 
         <button onclick="adjustStock('${p.code}',1)">＋</button>
         <button onclick="adjustStock('${p.code}',-1)">－</button>
-        <button onclick="openProductForm(${JSON.stringify(p).replace(/"/g, '&quot;')})">
-          ✏️ แก้ไข
-        </button>
+        <button onclick="openProductForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>
       `;
       root.appendChild(card);
     });
   }
 
   /* =========================
-     PRODUCT FORM (WITH IMAGE)
+     COMMON
   ========================= */
 
+  function renderLoading() {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `<p>⏳ กำลังโหลด...</p>`;
+    return div;
+  }
+
+  function renderError() {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `<p>❌ ${state.error}</p>`;
+    return div;
+  }
+</script>
+
+  /* =========================
+     PRODUCT FORM (WITH IMAGE)
+  ========================= */
+<script>
   function openProductForm(product = null) {
     const app = document.getElementById('app');
     app.innerHTML = '';
@@ -497,93 +634,6 @@
     div.className = 'card';
     div.innerHTML = `<p>❌ ${state.error}</p>`;
     return div;
-  }
-</script>
-<!-- ===== VIEWER SUPPORT FUNCTIONS ===== -->
-<script>
-  async function loadProducts() {
-    const data = await apiListProducts();
-    if (!data) return;
-    state.products = data;
-    applyFilter();
-    renderUI();
-  }
-
-  function applyFilter() {
-    state.filteredProducts = state.products.filter(p => {
-      const matchSearch =
-        p.name.toLowerCase().includes(state.search.toLowerCase());
-
-      const matchCategory =
-        state.category === 'all' || p.category === state.category;
-
-      return matchSearch && matchCategory;
-    });
-  }
-
-  function onSearch(value) {
-    state.search = value;
-    applyFilter();
-    renderUI();
-  }
-
-  function onFilterCategory(value) {
-    state.category = value;
-    applyFilter();
-    renderUI();
-  }
-
-  function renderCategoryOptions() {
-    const categories = [...new Set(state.products.map(p => p.category))];
-    return categories.map(c => `<option value="${c}">${c}</option>`).join('');
-  }
-
-  /* ===== ADMIN LOGIN (STEP 6) ===== */
-
-  function renderAdminLogin() {
-    const app = document.getElementById('app');
-    app.innerHTML = '';
-
-    const header = document.createElement('div');
-    header.className = 'header';
-    header.innerHTML = `
-      <h1>🔐 Admin Login</h1>
-      <button class="badge" onclick="renderUI()">Back</button>
-    `;
-
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <input id="login-user" placeholder="Username"
-        style="width:100%;padding:10px;margin-bottom:8px;" />
-      <input id="login-pass" type="password" placeholder="Password"
-        style="width:100%;padding:10px;margin-bottom:8px;" />
-      <button onclick="submitLogin()"
-        style="width:100%;padding:12px;background:#38bdf8;">
-        Login
-      </button>
-    `;
-
-    app.appendChild(header);
-    app.appendChild(card);
-  }
-
-  async function submitLogin() {
-    const u = document.getElementById('login-user').value;
-    const p = document.getElementById('login-pass').value;
-
-    if (!u || !p) {
-      alert('กรอก username และ password');
-      return;
-    }
-
-    const data = await apiLogin(u, p);
-    if (!data) return;
-
-    localStorage.setItem('admin_token', data.token);
-    state.token = data.token;
-    state.mode = 'admin';
-    renderUI();
   }
 </script>
 
