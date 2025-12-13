@@ -1,256 +1,100 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stock System</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockBuilder</title>
 
-<style>
-:root{
-  --pink-1:#ff6fae;
-  --pink-2:#ff9fcf;
-  --pink-3:#ffe1ef;
-  --glass-bg:rgba(255,255,255,.65);
-  --glass-br:rgba(255,255,255,.45);
-  --text-dark:#5a2240;
-}
-
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family: system-ui,"Noto Sans Thai",sans-serif;
-  background:linear-gradient(135deg,#ffb3d9,#fff);
-  color:var(--text-dark);
-}
-
-header{
-  padding:14px;
-  font-weight:700;
-  background:rgba(255,255,255,.6);
-  backdrop-filter:blur(10px);
-  position:sticky;
-  top:0;
-}
-
-#app{
-  padding:14px;
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
-}
-
-.card{
-  background:var(--glass-bg);
-  border-radius:18px;
-  padding:10px;
-  box-shadow:0 10px 28px rgba(255,111,174,.22);
-}
-
-.card img{
-  width:100%;
-  aspect-ratio:1/1;
-  border-radius:14px;
-  object-fit:cover;
-}
-
-.card h3{margin:6px 0 2px;font-size:14px}
-.meta{font-size:12px;opacity:.8}
-.cost{font-size:13px;font-weight:700}
-
-.badge{
-  display:inline-block;
-  margin-top:6px;
-  padding:4px 8px;
-  border-radius:999px;
-  font-size:11px;
-  background:#ff4f9a;
-  color:#fff;
-}
-
-.admin-bar{
-  position:fixed;
-  bottom:16px;
-  left:50%;
-  transform:translateX(-50%);
-}
-
-.stock-btn{
-  padding:14px 20px;
-  border-radius:999px;
-  border:none;
-  font-weight:700;
-  background:#ff4f9a;
-  color:#fff;
-  cursor:pointer;
-}
-
-/* ===== MODAL ===== */
-.modal-bg{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.35);
-  display:flex;
-  align-items:flex-end;
-}
-
-.modal{
-  width:100%;
-  padding:20px;
-  background:#fff;
-  border-radius:24px 24px 0 0;
-}
-.modal input,
-.modal select,
-.modal textarea{
-  width:100%;
-  padding:14px;
-  margin-bottom:8px;
-  border-radius:14px;
-  border:1px solid #ddd;
-}
-</style>
+  <!-- ========================= -->
+  <!-- UI STYLE (STEP 2 จะมาใส่) -->
+  <!-- ========================= -->
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f172a;
+      color: #fff;
+    }
+  </style>
 </head>
-
 <body>
 
-<header>Stock System</header>
+  <!-- ========================= -->
+  <!-- APP ROOT -->
+  <!-- ========================= -->
+  <div id="app"></div>
 
-<main id="app"></main>
+  <!-- ========================= -->
+  <!-- GLOBAL STATE -->
+  <!-- ========================= -->
+  <script>
+    const state = {
+      mode: 'viewer', // viewer | admin
+      token: null,
+      products: [],
+      loading: false,
+      error: null
+    };
+  </script>
 
-<div class="admin-bar">
-  <button class="stock-btn" onclick="openAddProductModal()">➕ เพิ่มสินค้า</button>
-</div>
+  <!-- ========================= -->
+  <!-- STATE INIT -->
+  <!-- ========================= -->
+  <script>
+    function initState() {
+      const savedToken = localStorage.getItem('admin_token');
+      if (savedToken) {
+        state.mode = 'admin';
+        state.token = savedToken;
+      } else {
+        state.mode = 'viewer';
+      }
+    }
+  </script>
 
-<!-- ================= MODAL ADD PRODUCT ================= -->
-<div id="addProductModal" class="modal-bg" style="display:none">
-  <div class="modal">
+  <!-- ========================= -->
+  <!-- RENDER FUNCTIONS -->
+  <!-- ========================= -->
+  <script>
+    function renderUI() {
+      const app = document.getElementById('app');
+      app.innerHTML = '';
 
-    <h3>➕ เพิ่มสินค้าใหม่</h3>
-
-    <input id="newSku" placeholder="รหัสสินค้า (SKU)">
-    <input id="newName" placeholder="ชื่อสินค้า">
-    <input id="newCost" type="number" placeholder="ราคาทุน">
-
-    <!-- หมวด (กรอกเองได้) -->
-    <input id="newCategory" placeholder="หมวดสินค้า">
-
-    <!-- สถานะ -->
-    <select id="newStatus">
-      <option value="Draft">Draft (ยังไม่ขาย)</option>
-      <option value="พร้อมส่ง">พร้อมส่ง</option>
-      <option value="หมด">หมด</option>
-    </select>
-
-    <!-- STEP 1 : เลือกรูป (ยังไม่อัปโหลด) -->
-    <input type="file"
-           id="addImageInput"
-           accept="image/*"
-           hidden
-           onchange="handleTempImageUpload()">
-
-    <button class="stock-btn"
-      onclick="document.getElementById('addImageInput').click()">
-      📷 เลือกรูปสินค้า
-    </button>
-
-    <img id="addImagePreview"
-         style="width:100%;border-radius:12px;display:none;margin-top:8px">
-
-    <textarea id="newNote" placeholder="หมายเหตุ (ถ้ามี)"></textarea>
-
-    <button class="stock-btn" style="background:#4caf50"
-      onclick="confirmAddProduct()">💾 บันทึกสินค้า</button>
-
-    <button onclick="closeAddProductModal()">ยกเลิก</button>
-
-  </div>
-</div>
-
-<script>
-const API = "https://script.google.com/macros/s/AKfycby8s440W72bqx8khrsDZnCo0FQelouKbs8bdFoNfqDkUPfXwdshGg16K3sbJbxRKArf3A/exec";
-
-/* ===== TEMP IMAGE (STEP 1) ===== */
-let tempImageFile = null;
-
-/* ===== LOAD PRODUCTS ===== */
-function loadProducts(){
-  fetch(API+"?action=list")
-    .then(r=>r.json())
-    .then(res=>{
-      if(!res.ok) return;
-      document.getElementById("app").innerHTML =
-        res.data.map(p=>`
-          <div class="card">
-            <img src="${p.image||'https://via.placeholder.com/300'}">
-            <h3>${p.name}</h3>
-            <div class="meta">SKU: ${p.sku}</div>
-            <div class="cost">฿${p.cost}</div>
-            <span class="badge">${p.status}</span>
-          </div>
-        `).join("");
-    });
-}
-loadProducts();
-
-/* ===== MODAL ===== */
-function openAddProductModal(){
-  document.getElementById("addProductModal").style.display="flex";
-}
-function closeAddProductModal(){
-  document.getElementById("addProductModal").style.display="none";
-}
-
-/* ===== STEP 1 : SELECT IMAGE (NO UPLOAD) ===== */
-function handleTempImageUpload(){
-  const input=document.getElementById("addImageInput");
-  const preview=document.getElementById("addImagePreview");
-
-  if(!input.files.length) return;
-  const file=input.files[0];
-  if(!file.type.startsWith("image/")){
-    alert("กรุณาเลือกไฟล์รูปภาพ");
-    return;
-  }
-
-  tempImageFile=file;
-  preview.src=URL.createObjectURL(file);
-  preview.style.display="block";
-}
-
-/* ===== SAVE PRODUCT (NO IMAGE) ===== */
-function confirmAddProduct(){
-  const sku=newSku.value.trim();
-  const name=newName.value.trim();
-
-  if(!sku||!name){
-    alert("กรุณากรอก SKU และชื่อสินค้า");
-    return;
-  }
-
-  const params=new URLSearchParams({
-    action:"addproduct",
-    sku,
-    name,
-    cost:newCost.value||0,
-    category:newCategory.value||"",
-    status:newStatus.value,
-    note:newNote.value||""
-  });
-
-  fetch(API+"?"+params.toString())
-    .then(r=>r.json())
-    .then(res=>{
-      if(!res.ok){
-        alert(res.error||"บันทึกไม่สำเร็จ");
-        return;
+      if (state.mode === 'viewer') {
+        renderViewer(app);
       }
 
-      alert("บันทึกข้อมูลสินค้าแล้ว (STEP 1 เสร็จ)");
-      closeAddProductModal();
-      loadProducts();
-    });
-}
-</script>
+      if (state.mode === 'admin') {
+        renderAdmin(app);
+      }
+    }
+
+    function renderViewer(root) {
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <h1>📦 StockBuilder</h1>
+        <p>Viewer Mode</p>
+      `;
+      root.appendChild(div);
+    }
+
+    function renderAdmin(root) {
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <h1>🔐 Admin Dashboard</h1>
+        <p>Admin Mode</p>
+      `;
+      root.appendChild(div);
+    }
+  </script>
+
+  <!-- ========================= -->
+  <!-- APP START -->
+  <!-- ========================= -->
+  <script>
+    initState();
+    renderUI();
+  </script>
 
 </body>
 </html>
