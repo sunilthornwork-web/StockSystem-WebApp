@@ -327,7 +327,22 @@
   /* =========================
      VIEWER SUPPORT
   ========================= */
+async function adjustStock(code, diff) {
+    if (state.role !== 'admin' && state.role !== 'staff') {
+      alert('สิทธิ์ไม่เพียงพอ');
+      return;
+    }
 
+    if (state.submitting) return;
+    state.submitting = true;
+
+    await apiUpdateStock(code, diff);
+    logAction('updateStock', { code, diff });
+
+    state.submitting = false;
+    renderUI();
+}
+  
   async function loadProducts() {
     const data = await apiListProducts();
     if (!data) return;
@@ -362,7 +377,7 @@
     const categories = [...new Set(state.products.map(p => p.category))];
     return categories.map(c => `<option value="${c}">${c}</option>`).join('');
   }
-
+  
   /* =========================
      ADMIN LOGIN
   ========================= */
@@ -539,7 +554,10 @@
 
         <button onclick="adjustStock('${p.code}',1)">＋</button>
         <button onclick="adjustStock('${p.code}',-1)">－</button>
-        <button onclick="showStockHistory('${p.code}')">📊 History</button>
+        ${state.role === 'admin'
+  ? `<button onclick="showStockHistory('${p.code}')">📊 History</button>`
+  : ''}
+
       
 
         ${state.role === 'admin'
