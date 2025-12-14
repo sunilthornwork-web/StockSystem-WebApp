@@ -311,16 +311,29 @@
     return null;
   }
 
-  function logAction(action, payload) {
-    const log = {
-      time: new Date().toISOString(),
-      action,
-      payload
-    };
-    state.logs.push(log);
-    console.log('LOG:', log);
-    // STEP 9: ถ้าต้องการส่ง backend → เพิ่ม apiRequest('log', log)
-  }
+  function apiLog(log) {
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'log',
+      token: state.token,
+      payload: log
+    })
+  }).catch(console.error);
+}
+
+function logAction(action, payload) {
+  const log = {
+    time: new Date().toISOString(),
+    action,
+    payload
+  };
+  state.logs.push(log);
+  apiLog(log); // ✅ ไม่แตะ loading / render
+}
+
+
 </script>
 
 <!-- ========================= -->
