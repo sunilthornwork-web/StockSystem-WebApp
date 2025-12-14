@@ -244,6 +244,11 @@
   function apiUpdateStock(code, diff) {
     return apiRequest('updateStock', { code, diff });
   }
+
+  function apiStockHistory(code) {
+    return apiRequest('stockHistory', { code });
+  }
+  
 </script>
 
     <!-- ===== IMAGE UPLOAD ===== -->
@@ -534,9 +539,12 @@
 
         <button onclick="adjustStock('${p.code}',1)">＋</button>
         <button onclick="adjustStock('${p.code}',-1)">－</button>
+        <button onclick="showStockHistory('${p.code}')">📊 History</button>
+      
 
         ${state.role === 'admin'
           ? `<button onclick="openProductForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>`
+          
           : ''}
       `;
       root.appendChild(card);
@@ -715,6 +723,73 @@
     URL.revokeObjectURL(url);
     logAction('exportCSV', { count: state.products.length });
   }
+
+  async function showStockHistory(code) {
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+
+    const header = document.createElement('div');
+    header.className = 'header';
+    header.innerHTML = `
+      <h1>📊 Stock History (${code})</h1>
+      <button class="badge" onclick="renderUI()">Back</button>
+    `;
+
+    app.appendChild(header);
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <canvas id="historyChart" width="300" height="200"></canvas>
+    `;
+    app.appendChild(card);
+
+    const data = await apiStockHistory(code);
+    if (!data || !data.length) {
+      card.innerHTML += `<p>ไม่มีประวัติ</p>`;
+      return;
+    }
+
+    drawStockChart(data);
+  }
+
+  function drawStockChart(data) {
+    const canvas = document.getElementById('historyChart');
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const padding = 30;
+    const maxStock = Math.max(...data.map(d => d.stock));
+    const minStock = Math.min(...data.map(d => d.stock));
+
+    const xStep = (canvas.width - padding * 2) / (data.length - 1 || 1);
+    const yScale = (canvas.height - padding * 2) / (maxStock - minStock || 1);
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    data.forEach((point, i) => {
+      const x = padding + i * xStep;
+      const y = canvas.height - padding - (point.stock - minStock) * yScale;
+
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+
+    ctx.stroke();
+
+    ctx.fillStyle = '#38bdf8';
+    data.forEach((point, i) => {
+      const x = padding + i * xStep;
+      const y = canvas.height - padding - (point.stock - minStock) * yScale;
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+  
 </script>
 <!-- ========================= -->
 <!-- APP START -->
