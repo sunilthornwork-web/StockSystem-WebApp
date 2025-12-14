@@ -191,37 +191,36 @@
 <!-- ========================= -->
 <script>
   async function apiRequest(action, payload = {}) {
-    state.loading = true;
-    state.error = null;
-    renderUI();
+  state.loading = true;
+  state.error = null;
+  renderUI();
 
-    try {
-      const res = await f {
-        method: 'POST',
-        body: JSON.stringify({
-          action,
-          token: state.token,
-          payload
-        })
-      });
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        token: state.token,
+        payload
+      })
+    });
 
-      const data = await res.json();
-
-      if (!data.success) {
-        throw new Error(data.message || 'API Error');
-      }
-
-      return data.data;
-    } catch (err) {
-      state.error = err.message;
-      console.error(err);
-      return null;
-    } finally {
-      state.loading = false;
-      renderUI();
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.message || 'API Error');
     }
-  }
 
+    return data.data;
+  } catch (err) {
+    state.error = err.message;
+    console.error(err);
+    return null;
+  } finally {
+    state.loading = false;
+    renderUI();
+  }
+}
   /* ===== API WRAPPERS ===== */
 
   function apiListProducts() {
@@ -258,35 +257,39 @@
     <!-- ===== IMAGE UPLOAD ===== -->
 <script>
   async function apiUploadImage(file) {
-    state.loading = true;
-    state.error = null;
+  state.loading = true;
+  state.error = null;
+  renderUI();
+
+  try {
+    const base64 = await fileToBase64(file);
+
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'upload',
+        token: state.token,
+        payload: {
+          filename: file.name,
+          mimeType: file.type,
+          data: base64
+        }
+      })
+    });
+
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+
+    return json.data.url;
+  } catch (e) {
+    state.error = e.message;
+    return null;
+  } finally {
+    state.loading = false;
     renderUI();
-
-    try {
-      const base64 = await fileToBase64(file);
-
-      const res = await fetch(API_URL, {
-  method: 'POST',
-  body: JSON.stringify({
-    action,
-    token: state.token,
-    payload
-  })
-});
-
-
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message);
-
-      return json.data.url;
-    } catch (e) {
-      state.error = e.message;
-      return null;
-    } finally {
-      state.loading = false;
-      renderUI();
-    }
   }
+}
 
   function fileToBase64(file) {
     return new Promise(res => {
@@ -622,10 +625,12 @@ function drawDashboardChart(history) {
     if (state.loading) return root.appendChild(renderLoading());
     if (state.error) return root.appendChild(renderError());
 
-    const data = await apiListProducts();
-    if (!data) return;
+    if (state.products.length === 0) {
+  const data = await apiListProducts();
+  if (!data) return;
+  state.products = data;
+    }
 
-    state.products = data;
 
     state.products.forEach(p => {
       const card = document.createElement('div');
