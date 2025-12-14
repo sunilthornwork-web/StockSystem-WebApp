@@ -388,6 +388,13 @@ async function adjustStock(code, diff) {
 ========================= */
 
 async function renderDashboard() {
+
+  // 🔐 ROLE GUARD — ต้องเป็น admin เท่านั้น
+  if (state.role !== 'admin') {
+    alert('สิทธิ์ไม่เพียงพอ');
+    return;
+  }
+
   const app = document.getElementById('app');
   app.innerHTML = '';
 
