@@ -131,6 +131,7 @@
   const state = {
     mode: 'viewer',
     token: null,
+    role: 'viewer',   // 🔐 viewer | staff | admin
 
     products: [],
     filteredProducts: [],
@@ -141,8 +142,8 @@
     loading: false,
     error: null,
 
-    submitting: false,   // 🔒 กันกดซ้ำ
-    logs: []              // 🧾 เก็บ log ฝั่งหน้า
+    submitting: false,
+    logs: []
   };
 </script>
 
@@ -161,23 +162,29 @@
 <script>
   function initState() {
     const savedToken = localStorage.getItem('admin_token');
+    const savedRole  = localStorage.getItem('admin_role');
 
-    if (savedToken) {
+    if (savedToken && savedRole) {
       state.mode = 'admin';
       state.token = savedToken;
+      state.role = savedRole;   // 🔐 restore role
     } else {
       state.mode = 'viewer';
       state.token = null;
+      state.role = 'viewer';
     }
   }
 
   function logoutAdmin() {
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_role');
     state.mode = 'viewer';
     state.token = null;
+    state.role = 'viewer';
     renderUI();
   }
 </script>
+
 
 <!-- ========================= -->
 <!-- API FUNCTIONS -->
@@ -396,11 +403,14 @@
     if (!data) return;
 
     localStorage.setItem('admin_token', data.token);
+    localStorage.setItem('admin_role', data.role);
+
     state.token = data.token;
+    state.role = data.role;   // 🔐 role จาก backend
     state.mode = 'admin';
+
     renderUI();
   }
-
   /* =========================
      MAIN RENDER
   ========================= */
@@ -485,23 +495,27 @@
     const header = document.createElement('div');
     header.className = 'header';
     header.innerHTML = `
-      <h1>🧑‍💼 Admin Dashboard</h1>
+      <h1>🧑‍💼 Dashboard (${state.role})</h1>
       <button class="badge" onclick="logoutAdmin()">Logout</button>
     `;
     root.appendChild(header);
 
-    const addBtn = document.createElement('button');
-    addBtn.className = 'card';
-    addBtn.innerHTML = '➕ เพิ่มสินค้าใหม่';
-    addBtn.onclick = () => openProductForm();
-    root.appendChild(addBtn);
+    /* ===== ADMIN ONLY ===== */
+    if (state.role === 'admin') {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'card';
+      addBtn.innerHTML = '➕ เพิ่มสินค้าใหม่';
+      addBtn.onclick = () => openProductForm();
+      root.appendChild(addBtn);
 
-    const exportBtn = document.createElement('button');
-  exportBtn.className = 'card';
-  exportBtn.innerHTML = '📤 Export Stock (CSV)';
-  exportBtn.onclick = () => exportCSV();
-  root.appendChild(exportBtn);
+      const exportBtn = document.createElement('button');
+      exportBtn.className = 'card';
+      exportBtn.innerHTML = '📤 Export CSV';
+      exportBtn.onclick = () => exportCSV();
+      root.appendChild(exportBtn);
+    }
 
+    /* ===== LOAD PRODUCTS ===== */
     if (state.loading) return root.appendChild(renderLoading());
     if (state.error) return root.appendChild(renderError());
 
@@ -515,18 +529,19 @@
       card.className = 'card admin';
       card.innerHTML = `
         <b>${p.name}</b> (${p.code})<br/>
-        ราคา: ฿${p.price}<br/>
-        หมวด: ${p.category}<br/>
         สต๊อก: <b>${p.stock}</b><br/>
         สถานะ: ${p.status}<br/><br/>
+
         <button onclick="adjustStock('${p.code}',1)">＋</button>
         <button onclick="adjustStock('${p.code}',-1)">－</button>
-        <button onclick="openProductForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>
+
+        ${state.role === 'admin'
+          ? `<button onclick="openProductForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>`
+          : ''}
       `;
       root.appendChild(card);
     });
   }
-
   /* =========================
      PRODUCT FORM
   ========================= */
@@ -572,10 +587,19 @@
   }
 
   async function submitProduct(isEdit) {
+    /* ===== ROLE GUARD ===== */
+    if (state.role !== 'admin') {
+      alert('สิทธิ์ไม่เพียงพอ');
+      return;
+    }
+
+    /* ===== SUBMIT LOCK ===== */
     if (state.submitting) return;
     state.submitting = true;
 
-    const file = document.getElementById('p-image').files[0];
+    /* ===== IMAGE UPLOAD ===== */
+    const fileInput = document.getElementById('p-image');
+    const file = fileInput ? fileInput.files[0] : null;
     let imageUrl = null;
 
     if (file) {
@@ -586,6 +610,7 @@
       }
     }
 
+    /* ===== BUILD PRODUCT ===== */
     const product = {
       code: document.getElementById('p-code').value,
       name: document.getElementById('p-name').value,
@@ -596,6 +621,7 @@
       image: imageUrl
     };
 
+    /* ===== VALIDATION ===== */
     const err = validateProduct(product);
     if (err) {
       state.error = err;
@@ -604,6 +630,7 @@
       return;
     }
 
+    /* ===== API CALL ===== */
     if (isEdit) {
       await apiUpdateProduct(product);
       logAction('update', product);
@@ -612,17 +639,7 @@
       logAction('add', product);
     }
 
-    state.submitting = false;
-    renderUI();
-  }
-
-  async function adjustStock(code, diff) {
-    if (state.submitting) return;
-    state.submitting = true;
-
-    await apiUpdateStock(code, diff);
-    logAction('updateStock', { code, diff });
-
+    /* ===== DONE ===== */
     state.submitting = false;
     renderUI();
   }
