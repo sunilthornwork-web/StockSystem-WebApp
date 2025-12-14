@@ -197,14 +197,14 @@
 
   try {
     const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action,
-        token: state.token,
-        payload
-      })
-    });
+  method: 'POST',
+  body: JSON.stringify({
+    action,
+    token: state.token,
+    payload
+  })
+});
+
 
     const data = await res.json();
     if (!data.success) {
@@ -265,18 +265,18 @@
     const base64 = await fileToBase64(file);
 
     const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'upload',
-        token: state.token,
-        payload: {
-          filename: file.name,
-          mimeType: file.type,
-          data: base64
-        }
-      })
-    });
+  method: 'POST',
+  body: JSON.stringify({
+    action: 'upload',
+    token: state.token,
+    payload: {
+      filename: file.name,
+      mimeType: file.type,
+      data: base64
+    }
+  })
+});
+
 
     const json = await res.json();
     if (!json.success) throw new Error(json.message);
@@ -313,14 +313,14 @@
 
   function apiLog(log) {
   fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      action: 'log',
-      token: state.token,
-      payload: log
-    })
-  }).catch(console.error);
+  method: 'POST',
+  body: JSON.stringify({
+    action: 'log',
+    token: state.token,
+    payload: log
+  })
+});
+
 }
 
 function logAction(action, payload) {
