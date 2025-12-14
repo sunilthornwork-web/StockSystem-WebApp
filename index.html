@@ -247,9 +247,67 @@
   function apiListLogs(filters = {}) {
     return apiRequest('listLogs', filters);
   }
-
-
   
+</script>
+    
+<script>
+  /* ===== USER MANAGEMENT (STEP 4.1) ===== */
+
+  /* =========================
+   USER MANAGEMENT UI
+========================= */
+
+async function renderUserManagement() {
+  if (state.role !== 'admin') return;
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="header">
+      <h1>👥 User Management</h1>
+      <button class="badge" onclick="renderUI()">Back</button>
+    </div>
+    <div id="user-list"></div>
+  `;
+
+  const users = await apiListUsers();
+  if (!users) return;
+
+  const list = document.getElementById('user-list');
+  list.innerHTML = '';
+
+  users.forEach(u => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <b>${u.username}</b><br/>
+      <select onchange="changeUserRole('${u.username}', this.value)">
+        ${['viewer','staff','admin']
+          .map(r => `<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`)
+          .join('')}
+      </select>
+    `;
+    list.appendChild(card);
+  });
+}
+
+async function changeUserRole(username, role) {
+  const ok = confirm(`เปลี่ยน ${username} เป็น ${role}?`);
+  if (!ok) return;
+
+  const res = await apiUpdateUserRole(username, role);
+  if (res) {
+    alert('อัปเดตเรียบร้อย');
+    renderUserManagement();
+  }
+}
+
+  function apiListUsers() {
+    return apiRequest('listUsers');
+  }
+
+  function apiUpdateUserRole(username, role) {
+    return apiRequest('updateUserRole', { username, role });
+  }
 </script>
 
     <!-- ===== IMAGE UPLOAD ===== -->
@@ -599,8 +657,15 @@ logBtn.innerHTML = '🧾 Audit Logs';
 logBtn.onclick = () => renderAuditLogs();
 root.appendChild(logBtn);
 
+      const userBtn = document.createElement('button');
+userBtn.className = 'card';
+userBtn.innerHTML = '👥 User Management';
+userBtn.onclick = () => renderUserManagement();
+root.appendChild(userBtn);
+
 }
 
+    
         /* ===== ADMIN ONLY ===== */
     if (state.role === 'admin') {
       const addBtn = document.createElement('button');
