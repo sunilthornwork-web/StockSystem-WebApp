@@ -249,6 +249,11 @@
     return apiRequest('stockHistory', { code });
   }
   
+  function apiDashboardSummary() {
+    return apiRequest('dashboardSummary');
+  }
+
+  
 </script>
 
     <!-- ===== IMAGE UPLOAD ===== -->
@@ -377,7 +382,74 @@ async function adjustStock(code, diff) {
     const categories = [...new Set(state.products.map(p => p.category))];
     return categories.map(c => `<option value="${c}">${c}</option>`).join('');
   }
-  
+
+/* =========================
+   DASHBOARD (STEP 15)
+========================= */
+
+async function renderDashboard() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'header';
+  header.innerHTML = `
+    <h1>📊 Dashboard</h1>
+    <button class="badge" onclick="renderUI()">Back</button>
+  `;
+  app.appendChild(header);
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `<p>กำลังโหลดข้อมูล...</p>`;
+  app.appendChild(card);
+
+  const data = await apiDashboardSummary();
+  if (!data) return;
+
+  card.innerHTML = `
+    <p>📦 จำนวนสินค้า: <b>${data.totalProducts}</b></p>
+    <p>📊 สต๊อกรวม: <b>${data.totalStock}</b></p>
+    <p>⚠️ ใกล้หมด: <b>${data.lowStock}</b></p>
+    <p>💰 มูลค่าสต๊อก: <b>฿${data.stockValue}</b></p>
+  `;
+
+  drawDashboardChart(data.history || []);
+}
+
+function drawDashboardChart(history) {
+  if (!history.length) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 300;
+  canvas.height = 200;
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.appendChild(canvas);
+  document.getElementById('app').appendChild(card);
+
+  const ctx = canvas.getContext('2d');
+  const padding = 30;
+
+  const max = Math.max(...history.map(h => h.totalStock));
+  const min = Math.min(...history.map(h => h.totalStock));
+  const xStep = (canvas.width - padding * 2) / (history.length - 1 || 1);
+  const yScale = (canvas.height - padding * 2) / (max - min || 1);
+
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+
+  history.forEach((p, i) => {
+    const x = padding + i * xStep;
+    const y = canvas.height - padding - (p.totalStock - min) * yScale;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+
+  ctx.stroke();
+}  
   /* =========================
      ADMIN LOGIN
   ========================= */
@@ -419,6 +491,7 @@ async function adjustStock(code, diff) {
       return;
     }
 
+    
     const data = await apiLogin(u, p);
     if (!data) return;
 
@@ -520,7 +593,15 @@ async function adjustStock(code, diff) {
     `;
     root.appendChild(header);
 
-    /* ===== ADMIN ONLY ===== */
+    if (state.role === 'admin') {
+  const dashBtn = document.createElement('button');
+  dashBtn.className = 'card';
+  dashBtn.innerHTML = '📊 Dashboard Overview';
+  dashBtn.onclick = () => renderDashboard();
+  root.appendChild(dashBtn);
+}
+
+        /* ===== ADMIN ONLY ===== */
     if (state.role === 'admin') {
       const addBtn = document.createElement('button');
       addBtn.className = 'card';
