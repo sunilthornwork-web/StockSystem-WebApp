@@ -638,6 +638,23 @@
     div.innerHTML = `<p>❌ ${state.error}</p>`;
     return div;
   }
+
+  function renderOverlay(root) {
+    const overlay = document.createElement('div');
+    overlay.style = `
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.5);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+    `;
+    overlay.innerHTML = `
+      <div class="card">⏳ กำลังประมวลผล...</div>
+    `;
+    root.appendChild(overlay);
+  }
 </script>
 <!-- ========================= -->
 <!-- APP START -->
