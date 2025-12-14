@@ -191,36 +191,29 @@
 <!-- ========================= -->
 <script>
   async function apiRequest(action, payload = {}) {
-  state.loading = true;
-  state.error = null;
-  renderUI();
-
   try {
     const res = await fetch(API_URL, {
-  method: 'POST',
-  body: JSON.stringify({
-    action,
-    token: state.token,
-    payload
-  })
-});
-
+      method: 'POST',
+      body: JSON.stringify({
+        action,
+        token: state.token,
+        payload
+      })
+    });
 
     const data = await res.json();
-    if (!data.success) {
-      throw new Error(data.message || 'API Error');
-    }
-
+    if (!data.success) throw new Error(data.message);
     return data.data;
+
   } catch (err) {
+    if (err.message === 'Unauthorized') {
+      logoutAdmin();   // 🔐 เด้งกลับ viewer อัตโนมัติ
+    }
     state.error = err.message;
-    console.error(err);
     return null;
-  } finally {
-    state.loading = false;
-    renderUI();
   }
 }
+
   /* ===== API WRAPPERS ===== */
 
   function apiListProducts() {
@@ -250,6 +243,11 @@
   function apiDashboardSummary() {
     return apiRequest('dashboardSummary');
   }
+
+  function apiListLogs(filters = {}) {
+    return apiRequest('listLogs', filters);
+  }
+
 
   
 </script>
@@ -311,29 +309,6 @@
     return null;
   }
 
-  function apiLog(log) {
-  fetch(API_URL, {
-  method: 'POST',
-  body: JSON.stringify({
-    action: 'log',
-    token: state.token,
-    payload: log
-  })
-});
-
-}
-
-function logAction(action, payload) {
-  const log = {
-    time: new Date().toISOString(),
-    action,
-    payload
-  };
-  state.logs.push(log);
-  apiLog(log); // ✅ ไม่แตะ loading / render
-}
-
-
 </script>
 
 <!-- ========================= -->
@@ -353,8 +328,7 @@ async function adjustStock(code, diff) {
     state.submitting = true;
 
     await apiUpdateStock(code, diff);
-    logAction('updateStock', { code, diff });
-
+   
     state.submitting = false;
     renderUI();
 }
@@ -558,6 +532,7 @@ function drawDashboardChart(history) {
       await loadProducts();
       return;
     }
+ 
 
     const searchCard = document.createElement('div');
     searchCard.className = 'card';
@@ -617,6 +592,13 @@ function drawDashboardChart(history) {
   dashBtn.innerHTML = '📊 Dashboard Overview';
   dashBtn.onclick = () => renderDashboard();
   root.appendChild(dashBtn);
+
+      const logBtn = document.createElement('button');
+logBtn.className = 'card';
+logBtn.innerHTML = '🧾 Audit Logs';
+logBtn.onclick = () => renderAuditLogs();
+root.appendChild(logBtn);
+
 }
 
         /* ===== ADMIN ONLY ===== */
@@ -760,11 +742,9 @@ function drawDashboardChart(history) {
     /* ===== API CALL ===== */
     if (isEdit) {
       await apiUpdateProduct(product);
-      logAction('update', product);
-    } else {
+          } else {
       await apiAddProduct(product);
-      logAction('add', product);
-    }
+          }
 
     /* ===== DONE ===== */
     state.submitting = false;
@@ -783,13 +763,18 @@ function drawDashboardChart(history) {
   }
 
   function renderError() {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `<p>❌ ${state.error}</p>`;
-    return div;
-  }
+  if (!state.error) return document.createElement('div');
 
-  function renderOverlay(root) {
+  const msg = state.error;
+  state.error = null;
+
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML = `<p>❌ ${msg}</p>`;
+  return div;
+}
+
+    function renderOverlay(root) {
     const overlay = document.createElement('div');
     overlay.style = `
       position:fixed;
@@ -807,41 +792,33 @@ function drawDashboardChart(history) {
   }
 
   function exportCSV() {
-    if (!state.products.length) {
-      alert('ไม่มีข้อมูลสินค้า');
-      return;
-    }
-
-    const headers = [
-      'code',
-      'name',
-      'price',
-      'stock',
-      'category',
-      'status',
-      'image'
-    ];
-
-    const rows = state.products.map(p =>
-      headers.map(h => `"${(p[h] ?? '').toString().replace(/"/g,'""')}"`).join(',')
-    );
-
-    const csv = [
-      headers.join(','),
-      ...rows
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `stock_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-
-    URL.revokeObjectURL(url);
-    logAction('exportCSV', { count: state.products.length });
+  if (!state.products.length) {
+    alert('ไม่มีข้อมูลสินค้า');
+    return;
   }
+
+  const headers = [
+    'code','name','price','stock','category','status','image'
+  ];
+
+  const rows = state.products.map(p =>
+    headers.map(h =>
+      `"${(p[h] ?? '').toString().replace(/"/g,'""')}"`
+    ).join(',')
+  );
+
+  const csv = [headers.join(','), ...rows].join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `stock_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
 
   async function showStockHistory(code) {
     const app = document.getElementById('app');
@@ -871,6 +848,63 @@ function drawDashboardChart(history) {
 
     drawStockChart(data);
   }
+
+  async function renderAuditLogs() {
+  if (state.role !== 'admin') return;
+
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  app.innerHTML = `
+    <div class="header">
+      <h1>🧾 Audit Logs</h1>
+      <button class="badge" onclick="renderUI()">Back</button>
+    </div>
+
+    <div class="card">
+      <input id="log-user" placeholder="username" />
+      <input id="log-action" placeholder="action" />
+      <input id="log-keyword" placeholder="keyword" />
+
+      <input id="log-from" type="date" />
+      <input id="log-to" type="date" />
+
+      <button onclick="loadLogs()">🔍 ค้นหา</button>
+    </div>
+
+    <div id="log-list"></div>
+  `;
+
+  loadLogs();
+}
+
+async function loadLogs() {
+  const filters = {
+    username: document.getElementById('log-user')?.value,
+    action: document.getElementById('log-action')?.value,
+    keyword: document.getElementById('log-keyword')?.value,
+    dateFrom: document.getElementById('log-from')?.value,
+    dateTo: document.getElementById('log-to')?.value
+  };
+
+  const logs = await apiListLogs(filters);
+  if (!logs) return;
+
+  const list = document.getElementById('log-list');
+  list.innerHTML = '';
+
+  logs.forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <b>${l.action}</b> — ${l.target || ''}<br/>
+      👤 ${l.user} (${l.role})<br/>
+      🕒 ${new Date(l.time).toLocaleString()}<br/>
+      <small>${l.detail || ''}</small>
+    `;
+    list.appendChild(div);
+  });
+}
 
   function drawStockChart(data) {
     const canvas = document.getElementById('historyChart');
