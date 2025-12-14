@@ -496,6 +496,12 @@
     addBtn.onclick = () => openProductForm();
     root.appendChild(addBtn);
 
+    const exportBtn = document.createElement('button');
+  exportBtn.className = 'card';
+  exportBtn.innerHTML = '📤 Export Stock (CSV)';
+  exportBtn.onclick = () => exportCSV();
+  root.appendChild(exportBtn);
+
     if (state.loading) return root.appendChild(renderLoading());
     if (state.error) return root.appendChild(renderError());
 
@@ -654,6 +660,43 @@
       <div class="card">⏳ กำลังประมวลผล...</div>
     `;
     root.appendChild(overlay);
+  }
+
+  function exportCSV() {
+    if (!state.products.length) {
+      alert('ไม่มีข้อมูลสินค้า');
+      return;
+    }
+
+    const headers = [
+      'code',
+      'name',
+      'price',
+      'stock',
+      'category',
+      'status',
+      'image'
+    ];
+
+    const rows = state.products.map(p =>
+      headers.map(h => `"${(p[h] ?? '').toString().replace(/"/g,'""')}"`).join(',')
+    );
+
+    const csv = [
+      headers.join(','),
+      ...rows
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `stock_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+    logAction('exportCSV', { count: state.products.length });
   }
 </script>
 <!-- ========================= -->
