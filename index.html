@@ -451,7 +451,6 @@
         ${renderCategoryOptions()}
       </select>
     `;
-
     root.appendChild(searchCard);
     root.appendChild(renderProductGrid());
   }
@@ -514,7 +513,6 @@
         หมวด: ${p.category}<br/>
         สต๊อก: <b>${p.stock}</b><br/>
         สถานะ: ${p.status}<br/><br/>
-
         <button onclick="adjustStock('${p.code}',1)">＋</button>
         <button onclick="adjustStock('${p.code}',-1)">－</button>
         <button onclick="openProductForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>
@@ -524,28 +522,9 @@
   }
 
   /* =========================
-     COMMON
+     PRODUCT FORM
   ========================= */
 
-  function renderLoading() {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `<p>⏳ กำลังโหลด...</p>`;
-    return div;
-  }
-
-  function renderError() {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `<p>❌ ${state.error}</p>`;
-    return div;
-  }
-</script>
-
-  /* =========================
-     PRODUCT FORM (WITH IMAGE)
-  ========================= */
-<script>
   function openProductForm(product = null) {
     const app = document.getElementById('app');
     app.innerHTML = '';
@@ -561,7 +540,6 @@
 
     const card = document.createElement('div');
     card.className = 'card';
-
     card.innerHTML = `
       <input id="p-code" placeholder="รหัสสินค้า"
         value="${product?.code || ''}" ${isEdit ? 'disabled' : ''} />
@@ -583,18 +561,23 @@
         ${isEdit ? 'บันทึก' : 'เพิ่มสินค้า'}
       </button>
     `;
-
     app.appendChild(header);
     app.appendChild(card);
   }
 
   async function submitProduct(isEdit) {
+    if (state.submitting) return;
+    state.submitting = true;
+
     const file = document.getElementById('p-image').files[0];
     let imageUrl = null;
 
     if (file) {
       imageUrl = await apiUploadImage(file);
-      if (!imageUrl) return;
+      if (!imageUrl) {
+        state.submitting = false;
+        return;
+      }
     }
 
     const product = {
@@ -607,14 +590,34 @@
       image: imageUrl
     };
 
-    if (isEdit) await apiUpdateProduct(product);
-    else await apiAddProduct(product);
+    const err = validateProduct(product);
+    if (err) {
+      state.error = err;
+      state.submitting = false;
+      renderUI();
+      return;
+    }
 
+    if (isEdit) {
+      await apiUpdateProduct(product);
+      logAction('update', product);
+    } else {
+      await apiAddProduct(product);
+      logAction('add', product);
+    }
+
+    state.submitting = false;
     renderUI();
   }
 
   async function adjustStock(code, diff) {
+    if (state.submitting) return;
+    state.submitting = true;
+
     await apiUpdateStock(code, diff);
+    logAction('updateStock', { code, diff });
+
+    state.submitting = false;
     renderUI();
   }
 
@@ -636,7 +639,6 @@
     return div;
   }
 </script>
-
 <!-- ========================= -->
 <!-- APP START -->
 <!-- ========================= -->
