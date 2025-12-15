@@ -207,8 +207,9 @@
 
   } catch (err) {
     if (err.message === 'Unauthorized') {
-      logoutAdmin();   // 🔐 เด้งกลับ viewer อัตโนมัติ
-    }
+  alert('Session หมดอายุ กรุณา login ใหม่');
+  logoutAdmin();
+}
     state.error = err.message;
     return null;
   }
@@ -294,7 +295,16 @@ async function changeUserRole(username, role) {
   const ok = confirm(`เปลี่ยน ${username} เป็น ${role}?`);
   if (!ok) return;
 
-  const res = await apiUpdateUserRole(username, role);
+  if (state.submitting) return;
+
+  let res = null;
+  try {
+    state.submitting = true;
+    res = await apiUpdateUserRole(username, role);
+  } finally {
+    state.submitting = false;
+  }
+
   if (res) {
     alert('อัปเดตเรียบร้อย');
     renderUserManagement();
