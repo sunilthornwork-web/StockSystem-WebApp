@@ -256,6 +256,13 @@
   });
 }
 
+function apiChangePassword(oldPassword, newPassword) {
+  return apiRequest('changePassword', {
+    oldPassword,
+    newPassword
+  });
+}
+
 </script>
     
 <script>
@@ -626,6 +633,64 @@ function drawDashboardChart(history) {
 
     renderUI();
   }
+
+   function renderChangePassword() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="header">
+      <h1>🔑 เปลี่ยนรหัสผ่าน</h1>
+      <button class="badge" onclick="renderUI()">Back</button>
+    </div>
+
+    <div class="card">
+      <input
+        id="old-pass"
+        type="password"
+        placeholder="รหัสผ่านเดิม"
+        style="width:100%;padding:10px;margin-bottom:8px;"
+      />
+
+      <input
+        id="new-pass"
+        type="password"
+        placeholder="รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)"
+        style="width:100%;padding:10px;margin-bottom:8px;"
+      />
+
+      <button
+        style="width:100%;padding:12px;background:#38bdf8;"
+        onclick="submitChangePassword()">
+        เปลี่ยนรหัสผ่าน
+      </button>
+    </div>
+  `;
+}
+
+  async function submitChangePassword() {
+  const oldPass = document.getElementById('old-pass').value;
+  const newPass = document.getElementById('new-pass').value;
+
+  if (!oldPass || !newPass) {
+    alert('กรุณากรอกรหัสผ่านให้ครบ');
+    return;
+  }
+
+  if (newPass.length < 8) {
+    alert('รหัสผ่านใหม่ต้องอย่างน้อย 8 ตัว');
+    return;
+  }
+
+  const ok = confirm('ยืนยันเปลี่ยนรหัสผ่าน?');
+  if (!ok) return;
+
+  const res = await apiChangePassword(oldPass, newPass);
+
+  if (res) {
+    alert('เปลี่ยนรหัสผ่านเรียบร้อย กรุณา login ใหม่');
+    logoutAdmin(); // 🔐 backend clear token แล้ว → logout ทันที
+  }
+}
+
   /* =========================
      MAIN RENDER
   ========================= */
@@ -734,6 +799,12 @@ userBtn.className = 'card';
 userBtn.innerHTML = '👥 User Management';
 userBtn.onclick = () => renderUserManagement();
 root.appendChild(userBtn);
+
+      const passBtn = document.createElement('button');
+passBtn.className = 'card';
+passBtn.innerHTML = '🔑 เปลี่ยนรหัสผ่าน';
+passBtn.onclick = () => renderChangePassword();
+root.appendChild(passBtn);
 
 }
 
