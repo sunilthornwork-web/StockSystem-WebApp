@@ -248,7 +248,14 @@
   function apiListLogs(filters = {}) {
     return apiRequest('listLogs', filters);
   }
-  
+
+  function apiResetPassword(username, newPassword) {
+  return apiRequest('resetPassword', {
+    username,
+    newPassword
+  });
+}
+
 </script>
     
 <script>
@@ -285,8 +292,15 @@ async function renderUserManagement() {
         ${['viewer','staff','admin']
           .map(r => `<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`)
           .join('')}
-      </select>
-    `;
+          </select>
+
+    <button
+      style="margin-top:8px"
+      onclick="openResetPassword('${u.username}')">
+      🔑 Reset Password
+    </button>
+  `;
+
     list.appendChild(card);
   });
 }
@@ -318,6 +332,54 @@ async function changeUserRole(username, role) {
   function apiUpdateUserRole(username, role) {
     return apiRequest('updateUserRole', { username, role });
   }
+
+  function openResetPassword(username) {
+  const app = document.getElementById('app');
+
+  app.innerHTML = `
+    <div class="header">
+      <h1>🔑 Reset Password</h1>
+      <button class="badge" onclick="renderUserManagement()">Back</button>
+    </div>
+
+    <div class="card">
+      <p>User: <b>${username}</b></p>
+
+      <input
+        id="new-pass"
+        type="password"
+        placeholder="New password (min 8 chars)"
+        style="width:100%;padding:10px;margin-top:8px"
+      />
+
+      <button
+        style="margin-top:12px;width:100%;padding:12px;background:#38bdf8"
+        onclick="submitResetPassword('${username}')">
+        Reset Password
+      </button>
+    </div>
+  `;
+}
+
+  async function submitResetPassword(username) {
+  const pass = document.getElementById('new-pass').value;
+
+  if (!pass || pass.length < 8) {
+    alert('รหัสผ่านต้องอย่างน้อย 8 ตัว');
+    return;
+  }
+
+  const ok = confirm(`รีเซ็ตรหัสผ่านของ ${username}?`);
+  if (!ok) return;
+
+  const res = await apiResetPassword(username, pass);
+
+  if (res) {
+    alert('รีเซ็ตรหัสผ่านเรียบร้อย');
+    renderUserManagement();
+  }
+}
+
 </script>
 
     <!-- ===== IMAGE UPLOAD ===== -->
