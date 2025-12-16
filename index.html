@@ -169,6 +169,13 @@ function startSessionWatcher() {
 
     // ⛔ session หมดอายุ
     if (age >= SESSION_MAX_AGE) {
+
+  // 🛑 ถ้าไม่ได้อยู่หน้า admin แล้ว ไม่ต้องเตือน
+  if (state.mode !== 'admin') {
+    clearInterval(sessionTimer);
+    return;
+  }
+
   if (!sessionExpiredHandled) {
     sessionExpiredHandled = true;
     alert('Session หมดอายุ กรุณา login ใหม่');
@@ -270,6 +277,8 @@ function startSessionWatcher() {
 
   } catch (err) {
     if (err.message === 'Unauthorized') {
+      if (state.mode !== 'admin') return null;
+
       if (!sessionExpiredHandled) {
         sessionExpiredHandled = true;
         alert('Session หมดอายุ กรุณา login ใหม่');
@@ -278,11 +287,10 @@ function startSessionWatcher() {
       return null;
     }
 
-    state.error = err.message;
+    state.error = err.message || 'Server error';
     return null;
   }
 }
-
   /* ===== API WRAPPERS ===== */
 
   function apiListProducts() {
@@ -791,10 +799,8 @@ function drawDashboardChart(history) {
   if (res) {
     alert('เปลี่ยนรหัสผ่านเรียบร้อย กรุณา login ใหม่');
     logoutAdmin(); // 🔐 backend clear token แล้ว → logout ทันที
-    
     sessionExpiredHandled = false; // ✅ เพิ่ม
-    renderUI();
-
+    
   }
 }
 
