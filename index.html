@@ -128,11 +128,13 @@
 <!-- GLOBAL STATE -->
 <!-- ========================= -->
 <script>
+  let sessionExpiredHandled = false; // ✅ อยู่ตรงนี้
+
   const state = {
     mode: 'viewer',
     token: null,
-    role: 'viewer',   // 🔐 viewer | staff | admin
-    username: null,   // ✅ เพิ่มบรรทัดนี้
+    role: 'viewer',
+    username: null,
 
     products: [],
     filteredProducts: [],
@@ -146,6 +148,44 @@
     submitting: false,
     logs: []
   };
+
+  const SESSION_MAX_AGE = 24 * 60 * 60 * 1000;
+  const SESSION_WARN_BEFORE = 5 * 60 * 1000;
+
+  let sessionTimer = null;
+</script>
+
+      
+    <script>
+function startSessionWatcher() {
+  clearInterval(sessionTimer);
+
+  sessionTimer = setInterval(() => {
+    const loginTime = Number(localStorage.getItem('admin_login_time'));
+    if (!loginTime) return;
+
+    const now = Date.now();
+    const age = now - loginTime;
+
+    // ⛔ session หมดอายุ
+    if (age >= SESSION_MAX_AGE) {
+  if (!sessionExpiredHandled) {
+    sessionExpiredHandled = true;
+    alert('Session หมดอายุ กรุณา login ใหม่');
+    logoutAdmin();
+  }
+  clearInterval(sessionTimer);
+  return;
+}
+
+    // ⚠️ เตือนก่อนหมดอายุ
+    if (SESSION_MAX_AGE - age <= SESSION_WARN_BEFORE) {
+      console.warn('Session จะหมดอายุในไม่กี่นาที');
+      // (ถ้าจะทำ popup เตือน → ทำตรงนี้)
+    }
+
+  }, 60 * 1000); // ตรวจทุก 1 นาที
+}
 </script>
 
 
@@ -164,13 +204,15 @@
   function initState() {
   const savedToken = localStorage.getItem('admin_token');
   const savedRole  = localStorage.getItem('admin_role');
-  const savedUser  = localStorage.getItem('admin_username'); // ✅
+  const savedUser  = localStorage.getItem('admin_username');
 
   if (savedToken && savedRole && savedUser) {
     state.mode = 'admin';
     state.token = savedToken;
     state.role = savedRole;
-    state.username = savedUser; // ✅
+    state.username = savedUser;
+
+    startSessionWatcher(); // ✅ เพิ่มบรรทัดนี้
   } else {
     state.mode = 'viewer';
     state.token = null;
@@ -178,7 +220,6 @@
     state.username = null;
   }
 }
-
 
   async function logoutAdmin() {
   if (state.token) {
@@ -189,18 +230,21 @@
     }
   }
 
+  clearInterval(sessionTimer); // ✅ สำคัญ
+
   localStorage.removeItem('admin_token');
-localStorage.removeItem('admin_role');
-localStorage.removeItem('admin_username'); // ✅ เพิ่ม
+  localStorage.removeItem('admin_role');
+  localStorage.removeItem('admin_username');
+  localStorage.removeItem('admin_login_time');
 
-state.mode = 'viewer';
-state.token = null;
-state.role = 'viewer';
-state.username = null; // ✅
+  state.mode = 'viewer';
+  state.token = null;
+  state.role = 'viewer';
+  state.username = null;
 
+  sessionExpiredHandled = false;  
   renderUI();
 }
-
 
 </script>
 
@@ -226,9 +270,14 @@ state.username = null; // ✅
 
   } catch (err) {
     if (err.message === 'Unauthorized') {
-  alert('Session หมดอายุ กรุณา login ใหม่');
-  logoutAdmin();
-}
+      if (!sessionExpiredHandled) {
+        sessionExpiredHandled = true;
+        alert('Session หมดอายุ กรุณา login ใหม่');
+        logoutAdmin();
+      }
+      return null;
+    }
+
     state.error = err.message;
     return null;
   }
@@ -670,17 +719,23 @@ function drawDashboardChart(history) {
   const data = await apiLogin(u, p);
   if (!data) return;
 
+  const now = Date.now();
+
   localStorage.setItem('admin_token', data.token);
   localStorage.setItem('admin_role', data.role);
-  localStorage.setItem('admin_username', u); // ✅ เพิ่ม
+  localStorage.setItem('admin_username', u.toLowerCase());
+  localStorage.setItem('admin_login_time', now); // ✅ เพิ่ม
 
   state.token = data.token;
   state.role = data.role;
-  state.username = u; // ✅ สำคัญมาก
+  state.username = u.toLowerCase();
   state.mode = 'admin';
-
+    
+  sessionExpiredHandled = false; // ✅ reset flag
+  startSessionWatcher(); // ✅ เริ่มจับเวลา
   renderUI();
 }
+
 
    function renderChangePassword() {
   const app = document.getElementById('app');
@@ -736,6 +791,10 @@ function drawDashboardChart(history) {
   if (res) {
     alert('เปลี่ยนรหัสผ่านเรียบร้อย กรุณา login ใหม่');
     logoutAdmin(); // 🔐 backend clear token แล้ว → logout ทันที
+    
+    sessionExpiredHandled = false; // ✅ เพิ่ม
+    renderUI();
+
   }
 }
 
