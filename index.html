@@ -233,6 +233,9 @@ function startPingSession() {
 <!-- ========================= -->
 <script>
   const API_URL = 'https://script.google.com/macros/s/AKfycby8s440W72bqx8khrsDZnCo0FQelouKbs8bdFoNfqDkUPfXwdshGg16K3sbJbxRKArf3A/exec';
+
+  // ✅ STEP 29.1 — Client Signature
+  const CLIENT_KEY = 'stockbuilder-v1';
 </script>
 
 
@@ -301,7 +304,8 @@ function startPingSession() {
       body: JSON.stringify({
         action,
         token: state.token,
-        payload
+        payload,
+        clientKey: CLIENT_KEY
       })
     });
 
