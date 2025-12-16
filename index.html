@@ -175,14 +175,26 @@
     }
   }
 
-  function logoutAdmin() {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_role');
-    state.mode = 'viewer';
-    state.token = null;
-    state.role = 'viewer';
-    renderUI();
+  async function logoutAdmin() {
+  if (state.token) {
+    try {
+      await apiLogout();
+    } catch (e) {
+      console.warn('Logout backend failed:', e.message);
+    }
   }
+
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_role');
+
+  state.mode = 'viewer';
+  state.token = null;
+  state.role = 'viewer';
+
+  renderUI();
+}
+
+
 </script>
 
 
@@ -247,6 +259,10 @@
 
   function apiListLogs(filters = {}) {
     return apiRequest('listLogs', filters);
+  }
+
+  function apiLogout() {
+  return apiRequest('logout');
   }
 
   function apiResetPassword(username, newPassword) {
