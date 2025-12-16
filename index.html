@@ -151,8 +151,9 @@
 
   const SESSION_MAX_AGE = 24 * 60 * 60 * 1000;
   const SESSION_WARN_BEFORE = 5 * 60 * 1000;
-
+  
   let sessionTimer = null;
+  let pingTimer = null;
 </script>
 
       
@@ -192,9 +193,40 @@ function startSessionWatcher() {
     }
 
   }, 60 * 1000); // ตรวจทุก 1 นาที
-}
+}      
 </script>
 
+<script>
+  
+    let pingRunning = false;
+
+function startPingSession() {
+  if (pingRunning) return;
+  pingRunning = true;
+
+  clearInterval(pingTimer);
+
+  pingTimer = setInterval(async () => {
+    if (state.mode !== 'admin' || !state.token) {
+      clearInterval(pingTimer);
+      pingRunning = false;
+      return;
+    }
+
+    try {
+      await apiPing();
+    } catch (e) {
+      if (!sessionExpiredHandled) {
+        sessionExpiredHandled = true;
+        alert('Session หมดอายุ กรุณา login ใหม่');
+        logoutAdmin();
+      }
+    }
+  }, 5 * 60 * 1000);
+}
+
+ </script>
+  
 
   <!-- ========================= -->
 <!-- API CONFIG -->
@@ -220,6 +252,7 @@ function startSessionWatcher() {
     state.username = savedUser;
 
     startSessionWatcher(); // ✅ เพิ่มบรรทัดนี้
+    startPingSession();   // ✅ เพิ่ม
   } else {
     state.mode = 'viewer';
     state.token = null;
@@ -238,6 +271,7 @@ function startSessionWatcher() {
   }
 
   clearInterval(sessionTimer); // ✅ สำคัญ
+  clearInterval(pingTimer); // ✅ เพิ่ม  
 
   localStorage.removeItem('admin_token');
   localStorage.removeItem('admin_role');
@@ -332,6 +366,11 @@ function startSessionWatcher() {
   function apiForceLogout(username) {
   return apiRequest('forceLogout', { username });
   }
+
+  function apiPing() {
+  return apiRequest('ping');
+  }
+
 
 
   function apiResetPassword(username, newPassword) {
@@ -741,6 +780,7 @@ function drawDashboardChart(history) {
     
   sessionExpiredHandled = false; // ✅ reset flag
   startSessionWatcher(); // ✅ เริ่มจับเวลา
+  startPingSession();      // ✅ เพิ่มบรรทัดนี้  
   renderUI();
 }
 
