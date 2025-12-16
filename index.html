@@ -556,6 +556,7 @@ async function changeUserRole(username, role) {
   body: JSON.stringify({
     action: 'upload',
     token: state.token,
+    clientKey: CLIENT_KEY, // ✅ เพิ่ม
     payload: {
       filename: file.name,
       mimeType: file.type,
@@ -563,7 +564,6 @@ async function changeUserRole(username, role) {
     }
   })
 });
-
 
     const json = await res.json();
     if (!json.success) throw new Error(json.message);
