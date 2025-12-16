@@ -132,6 +132,7 @@
     mode: 'viewer',
     token: null,
     role: 'viewer',   // 🔐 viewer | staff | admin
+    username: null,   // ✅ เพิ่มบรรทัดนี้
 
     products: [],
     filteredProducts: [],
@@ -161,19 +162,23 @@
 <!-- ========================= -->
 <script>
   function initState() {
-    const savedToken = localStorage.getItem('admin_token');
-    const savedRole  = localStorage.getItem('admin_role');
+  const savedToken = localStorage.getItem('admin_token');
+  const savedRole  = localStorage.getItem('admin_role');
+  const savedUser  = localStorage.getItem('admin_username'); // ✅
 
-    if (savedToken && savedRole) {
-      state.mode = 'admin';
-      state.token = savedToken;
-      state.role = savedRole;   // 🔐 restore role
-    } else {
-      state.mode = 'viewer';
-      state.token = null;
-      state.role = 'viewer';
-    }
+  if (savedToken && savedRole && savedUser) {
+    state.mode = 'admin';
+    state.token = savedToken;
+    state.role = savedRole;
+    state.username = savedUser; // ✅
+  } else {
+    state.mode = 'viewer';
+    state.token = null;
+    state.role = 'viewer';
+    state.username = null;
   }
+}
+
 
   async function logoutAdmin() {
   if (state.token) {
@@ -185,11 +190,13 @@
   }
 
   localStorage.removeItem('admin_token');
-  localStorage.removeItem('admin_role');
+localStorage.removeItem('admin_role');
+localStorage.removeItem('admin_username'); // ✅ เพิ่ม
 
-  state.mode = 'viewer';
-  state.token = null;
-  state.role = 'viewer';
+state.mode = 'viewer';
+state.token = null;
+state.role = 'viewer';
+state.username = null; // ✅
 
   renderUI();
 }
@@ -265,6 +272,11 @@
   return apiRequest('logout');
   }
 
+  function apiForceLogout(username) {
+  return apiRequest('forceLogout', { username });
+  }
+
+
   function apiResetPassword(username, newPassword) {
   return apiRequest('resetPassword', {
     username,
@@ -307,21 +319,32 @@ async function renderUserManagement() {
   list.innerHTML = '';
 
   users.forEach(u => {
+  const isSelf = u.username === state.username;
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
       <b>${u.username}</b><br/>
-      <select onchange="changeUserRole('${u.username}', this.value)">
+      <select
+  ${isSelf ? 'disabled' : ''}
+  onchange="changeUserRole('${u.username}', this.value)">
         ${['viewer','staff','admin']
           .map(r => `<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`)
           .join('')}
           </select>
 
     <button
-      style="margin-top:8px"
-      onclick="openResetPassword('${u.username}')">
-      🔑 Reset Password
-    </button>
+  style="margin-top:8px"
+  onclick="openResetPassword('${u.username}')">
+  🔑 Reset Password
+</button>
+
+${u.username !== state.username ? `
+<button
+  style="margin-top:8px;background:#ef4444;color:white"
+  onclick="confirmForceLogout('${u.username}')">
+  🚪 Force Logout
+</button>
+` : ''}
   `;
 
     list.appendChild(card);
@@ -402,6 +425,19 @@ async function changeUserRole(username, role) {
     renderUserManagement();
   }
 }
+
+  async function confirmForceLogout(username) {
+  const ok = confirm(`บังคับ logout ผู้ใช้ ${username}?`);
+  if (!ok) return;
+
+  const res = await apiForceLogout(username);
+
+  if (res) {
+    alert(`ผู้ใช้ ${username} ถูก logout เรียบร้อย`);
+    renderUserManagement();
+  }
+}
+
 
 </script>
 
@@ -628,27 +664,23 @@ function drawDashboardChart(history) {
   }
 
   async function submitLogin() {
-    const u = document.getElementById('login-user').value;
-    const p = document.getElementById('login-pass').value;
+  const u = document.getElementById('login-user').value;
+  const p = document.getElementById('login-pass').value;
 
-    if (!u || !p) {
-      alert('กรอก username และ password');
-      return;
-    }
+  const data = await apiLogin(u, p);
+  if (!data) return;
 
-    
-    const data = await apiLogin(u, p);
-    if (!data) return;
+  localStorage.setItem('admin_token', data.token);
+  localStorage.setItem('admin_role', data.role);
+  localStorage.setItem('admin_username', u); // ✅ เพิ่ม
 
-    localStorage.setItem('admin_token', data.token);
-    localStorage.setItem('admin_role', data.role);
+  state.token = data.token;
+  state.role = data.role;
+  state.username = u; // ✅ สำคัญมาก
+  state.mode = 'admin';
 
-    state.token = data.token;
-    state.role = data.role;   // 🔐 role จาก backend
-    state.mode = 'admin';
-
-    renderUI();
-  }
+  renderUI();
+}
 
    function renderChangePassword() {
   const app = document.getElementById('app');
