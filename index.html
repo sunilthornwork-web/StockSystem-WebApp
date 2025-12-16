@@ -314,6 +314,11 @@ function startPingSession() {
     return data.data;
 
   } catch (err) {
+    
+    if (err.message.includes('Rate limit')) {
+    alert(err.message);
+    return null;
+  }
     if (err.message === 'Unauthorized') {
       if (state.mode !== 'admin') return null;
 
