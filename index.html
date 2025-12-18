@@ -286,9 +286,77 @@ button:hover,
   margin-bottom: 10px;
 }
 
- 
 </style>
 
+    <style>
+/* =========================
+   PRODUCT CARD – CLEAN FINAL
+========================= */
+
+.grid {
+  align-items: stretch;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: center;
+  gap: 6px;
+  height: 100%;
+}
+
+/* ===== IMAGE ===== */
+.product-img {
+  margin-bottom: 6px;
+}
+
+/* ===== NAME ===== */
+.product-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  min-height: 2.7em;
+}
+
+/* ===== CODE + CATEGORY (SAME ROW GUARANTEE) ===== */
+.product-code,
+.product-category {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px 3px;
+  white-space: nowrap;
+}
+
+/* ===== PRICE ===== */
+.product-price {
+  align-self: center;
+  margin: 6px 0;
+}
+
+/* ===== META ===== */
+.product-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.meta-pill {
+  font-size: 0.75rem;
+  text-align: center;
+  justify-content: center;
+}
+
+/* ===== INPUT BALANCE ===== */
+.card input,
+.card select {
+  font-size: 0.95rem;
+}
+</style>
+
+    
     <style>
 /* ===== PRODUCT DETAIL MODAL ===== */
 .modal-overlay {
@@ -828,6 +896,32 @@ const getVal = (id) => {
 <!-- ========================= -->
 <!-- RENDER FUNCTIONS -->
 <!-- ========================= -->
+
+    <script>
+/* =========================
+   SEARCH FIX (NO FULL RERENDER)
+========================= */
+
+let searchTimer = null;
+
+function onSearch(value) {
+  state.search = value;
+
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    applyFilter();
+    renderProductGridOnly(); // ✅ render เฉพาะ grid
+  }, 150);
+}
+
+function renderProductGridOnly() {
+  const oldGrid = document.querySelector('.grid');
+  if (!oldGrid) return;
+
+  const newGrid = renderProductGrid();
+  oldGrid.replaceWith(newGrid);
+}
+</script>
     
 <script>
     function toggleSidebar() {
@@ -932,12 +1026,7 @@ const matchSearch =
     });
   }
 
-  function onSearch(value) {
-    state.search = value;
-    applyFilter();
-    renderUI();
-  }
-
+ 
   function onFilterCategory(value) {
     state.category = value;
     applyFilter();
