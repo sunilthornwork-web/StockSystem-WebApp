@@ -1111,9 +1111,6 @@ async function submitProduct(isEdit = false) {
       image: ''
     };
 
-    console.log('PRODUCT PAYLOAD:', product);
-
-    // ✅ validate ก่อน render
     const err = validateProduct(product);
     if (err) {
       alert(err);
@@ -1156,18 +1153,10 @@ async function submitProduct(isEdit = false) {
     alert(e.message || 'เพิ่ม / แก้ไขสินค้าไม่สำเร็จ');
   } finally {
     state.submitting = false;
-    renderUI(); // ✅ มีแค่ตรงนี้ที่เรียก
+    renderUI();
   }
 }
 
-  } catch (e) {
-    console.error(e);
-    alert(e.message || 'เพิ่ม / แก้ไขสินค้าไม่สำเร็จ');
-  } finally {
-    state.submitting = false;
-    renderUI(); // ✅ ปิด overlay เสมอ
-  }
-}
 
    
    /* =========================
