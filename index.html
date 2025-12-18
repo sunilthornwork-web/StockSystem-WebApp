@@ -1079,14 +1079,15 @@ root.appendChild(passBtn);
   }
 
   async function submitProduct(isEdit = false) {
-    console.log('SUBMIT PRODUCT CALLED');
+  console.log('SUBMIT PRODUCT CALLED');
+
   if (state.submitting) return;
   state.submitting = true;
 
   try {
     /* ===== IMAGE UPLOAD ===== */
     const fileInput = document.getElementById('p-image');
-    const file = fileInput ? fileInput.files[0] : null;
+    const file = fileInput?.files?.[0] || null;
     let imageUrl = null;
 
     if (file) {
@@ -1112,6 +1113,8 @@ root.appendChild(passBtn);
         ''
     };
 
+    console.log('PRODUCT PAYLOAD:', product);
+
     /* ===== VALIDATE ===== */
     const err = validateProduct(product);
     if (err) {
@@ -1120,20 +1123,21 @@ root.appendChild(passBtn);
     }
 
     /* ===== API ===== */
-    let saved = null;
-
     if (isEdit) {
       await apiUpdateProduct(product);
 
-      // 🔁 update state
       const idx = state.products.findIndex(p => p.code === code);
       if (idx !== -1) {
-        state.products[idx] = { ...state.products[idx], ...product };
+        state.products[idx] = {
+          ...state.products[idx],
+          ...product
+        };
       }
-    } else {
-      saved = await apiAddProduct(product);
 
-      // 🔥 สำคัญที่สุด
+    } else {
+      const saved = await apiAddProduct(product);
+
+      // ✅ สำคัญมาก
       if (saved) {
         state.products.push(saved);
       }
@@ -1141,6 +1145,8 @@ root.appendChild(passBtn);
 
     renderUI();
 
+  } catch (e) {
+    alert(e.message || 'เพิ่มสินค้าไม่สำเร็จ');
   } finally {
     state.submitting = false;
   }
