@@ -1095,10 +1095,8 @@ if (state.products.length === 0 && !state.loading) {
   }
 
 async function submitProduct(isEdit = false) {
-  // กันกดซ้ำ
   if (state.submitting) return;
   state.submitting = true;
-  renderUI(); // แสดง overlay
 
   try {
     const code = getVal('p-code');
@@ -1115,11 +1113,11 @@ async function submitProduct(isEdit = false) {
 
     console.log('PRODUCT PAYLOAD:', product);
 
-    // ✅ validate
+    // ✅ validate ก่อน render
     const err = validateProduct(product);
     if (err) {
       alert(err);
-      return; // ออกได้ ปลอดภัย (finally จะทำงาน)
+      return;
     }
 
     // ===== IMAGE =====
@@ -1128,9 +1126,7 @@ async function submitProduct(isEdit = false) {
 
     if (file) {
       const imageUrl = await apiUploadImage(file);
-      if (!imageUrl) {
-        throw new Error('อัปโหลดรูปไม่สำเร็จ');
-      }
+      if (!imageUrl) throw new Error('อัปโหลดรูปไม่สำเร็จ');
       product.image = imageUrl;
     } else if (isEdit) {
       product.image =
@@ -1143,22 +1139,26 @@ async function submitProduct(isEdit = false) {
 
       const idx = state.products.findIndex(p => p.code === code);
       if (idx !== -1) {
-        state.products[idx] = {
-          ...state.products[idx],
-          ...product
-        };
+        state.products[idx] = { ...state.products[idx], ...product };
       }
     } else {
       const saved = await apiAddProduct(product);
-
       if (saved && saved.code) {
         state.products.push(saved);
         applyFilter();
       } else {
-        // fallback sync
         await loadProducts();
       }
     }
+
+  } catch (e) {
+    console.error(e);
+    alert(e.message || 'เพิ่ม / แก้ไขสินค้าไม่สำเร็จ');
+  } finally {
+    state.submitting = false;
+    renderUI(); // ✅ เรียกได้ตรงนี้เท่านั้น
+  }
+}
 
   } catch (e) {
     console.error(e);
