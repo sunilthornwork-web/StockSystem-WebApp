@@ -95,12 +95,17 @@
   }
 
   .product-img {
-    width: 100%;
-    height: 110px;
-    background: linear-gradient(135deg, #1e293b, #020617);
-    border-radius: 12px;
-    margin-bottom: 8px;
-  }
+  width: 100%;
+  aspect-ratio: 1 / 1;      /* 🔲 สี่เหลี่ยม */
+  background-color: #020617;
+  border-radius: 12px;
+  margin-bottom: 8px;
+
+  background-size: contain; /* ✅ เห็นภาพเต็ม ไม่โดนตัด */
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 
   .product-name {
     font-size: 0.9rem;
@@ -938,14 +943,34 @@ function drawDashboardChart(history) {
       const card = document.createElement('div');
       card.className = 'product-card';
       card.innerHTML = `
-        <div class="product-img"
-          style="background-image:url('${p.image || ''}');
-                 background-size:cover;
-                 background-position:center;">
-        </div>
-        <div class="product-name">${p.name}</div>
-        <div class="product-price">฿${p.price}</div>
-      `;
+  <div class="product-img"
+    style="background-image:url('${p.image || ''}');">
+  </div>
+
+  <div class="product-name">${p.name}</div>
+
+  <div class="product-price">฿${p.price}</div>
+
+  <div style="font-size:0.8rem;color:#cbd5f5;margin-top:4px;">
+    จำนวนคงเหลือ: <b>${p.stock}</b>
+  </div>
+
+  <div style="font-size:0.8rem;color:#a5b4fc;">
+    สถานะ: ${p.status || '-'}
+  </div>
+
+  <div style="
+    font-size:0.7rem;
+    color:#94a3b8;
+    margin-top:6px;
+  ">
+    อัปเดตล่าสุด:
+    ${p.updatedAt
+      ? new Date(p.updatedAt).toLocaleString('th-TH')
+      : '-'}
+  </div>
+`;
+
       grid.appendChild(card);
     });
 
