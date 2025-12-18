@@ -11,117 +11,160 @@
 <!-- UI STYLE (STEP 2) -->
 <!-- ========================= -->
 <style>
-  :root {
-    --bg: #0b1020;
-    --glass: rgba(255,255,255,0.08);
-    --glass-border: rgba(255,255,255,0.18);
-    --glow: 0 0 30px rgba(56,189,248,0.25);
-    --primary: #38bdf8;
-    --text-muted: #94a3b8;
-  }
+/* ===== FONT ===== */
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
 
-  * {
-    box-sizing: border-box;
-  }
+:root {
+  --bg-main: linear-gradient(160deg,#ffb3d9,#d946ef 40%,#9333ea);
+  --glass: rgba(255,255,255,0.18);
+  --glass-strong: rgba(255,255,255,0.28);
+  --glass-border: rgba(255,255,255,0.45);
 
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    background: radial-gradient(circle at top, #0f172a, var(--bg));
-    color: #fff;
-    min-height: 100vh;
-  }
+  --primary: #ffd54f;      /* gold */
+  --primary-soft: #fff3c4;
+  --accent: #ff6ec7;
 
-  #app {
-    padding: 16px;
-    max-width: 480px;
-    margin: 0 auto;
-  }
+  --text-main: #ffffff;
+  --text-muted: #fde7f3;
 
-  h1 {
-    font-size: 1.4rem;
-    margin: 0 0 12px;
-  }
+  --glow: 0 0 40px rgba(255,110,199,0.45);
+  --glow-soft: 0 0 20px rgba(255,255,255,0.25);
+}
 
-  p {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-  }
+* {
+  box-sizing: border-box;
+}
 
-  /* ===== Glass Card ===== */
-  .card {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 18px;
-    padding: 16px;
-    margin-bottom: 14px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: var(--glow);
-  }
+body {
+  margin: 0;
+  font-family: 'Sarabun', 'Anuphan', system-ui, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-main);
+  min-height: 100vh;
+}
 
-  /* ===== Header ===== */
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
+#app {
+  padding: 18px;
+  max-width: 480px;
+  margin: 0 auto;
+}
 
-  .badge {
-    background: rgba(56,189,248,0.15);
-    color: var(--primary);
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    border: 1px solid rgba(56,189,248,0.4);
-  }
+/* ===== TYPO ===== */
+h1 {
+  font-size: 1.6rem;
+  margin: 0 0 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
 
-  /* ===== Product Grid (เตรียมไว้ STEP 5) ===== */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
+p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
 
-  .product-card {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    padding: 12px;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 0 20px rgba(0,0,0,0.3);
-  }
+/* ===== GLASS CARD ===== */
+.card {
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.35),
+    rgba(255,255,255,0.12)
+  );
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  padding: 16px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--glow-soft);
+}
 
-  .product-img {
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+/* ===== BADGE / BUTTON ===== */
+.badge,
+button {
+  font-family: inherit;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.55);
+  background: linear-gradient(
+    160deg,
+    rgba(255,255,255,0.55),
+    rgba(255,255,255,0.25)
+  );
+  color: #4a044e;
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--glow-soft);
+  transition: all 0.25s ease;
+}
+
+button:hover,
+.badge:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: var(--glow);
+}
+
+/* ===== GRID ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+/* ===== PRODUCT CARD ===== */
+.product-card {
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.32),
+    rgba(255,255,255,0.14)
+  );
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 14px;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--glow-soft);
+}
+
+.product-img {
   width: 100%;
-  aspect-ratio: 1 / 1;      /* 🔲 สี่เหลี่ยม */
-  background-color: #020617;
-  border-radius: 12px;
-  margin-bottom: 8px;
-
-  background-size: contain; /* ✅ เห็นภาพเต็ม ไม่โดนตัด */
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  background-color: rgba(255,255,255,0.25);
+  margin-bottom: 10px;
+  background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
 }
 
+.product-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
 
-  .product-name {
-    font-size: 0.9rem;
-    margin-bottom: 4px;
-  }
+.product-price {
+  color: #7c2d12;
+  background: linear-gradient(90deg,#fff3c4,#ffd54f);
+  padding: 4px 10px;
+  border-radius: 999px;
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
 
-  .product-price {
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 0.95rem;
-  }
-
-  /* ===== Admin Accent ===== */
-  .admin {
-    border-left: 3px solid var(--primary);
-  }
+/* ===== ADMIN ACCENT ===== */
+.admin {
+  border-left: 4px solid var(--primary);
+}
 </style>
 
     <style>
