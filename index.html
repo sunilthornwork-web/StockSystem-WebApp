@@ -1095,8 +1095,10 @@ if (state.products.length === 0 && !state.loading) {
   }
 
 async function submitProduct(isEdit = false) {
+  // กันกดซ้ำ
   if (state.submitting) return;
   state.submitting = true;
+  renderUI(); // แสดง overlay
 
   try {
     const code = getVal('p-code');
@@ -1113,102 +1115,57 @@ async function submitProduct(isEdit = false) {
 
     console.log('PRODUCT PAYLOAD:', product);
 
+    // ✅ validate
     const err = validateProduct(product);
     if (err) {
       alert(err);
-      return; // ✅ ออกได้ เพราะมี finally
+      return; // ออกได้ ปลอดภัย (finally จะทำงาน)
     }
 
-    renderUI(); // แสดง overlay หลัง validate ผ่าน
-
+    // ===== IMAGE =====
     const fileInput = document.getElementById('p-image');
     const file = fileInput?.files?.[0] || null;
 
     if (file) {
       const imageUrl = await apiUploadImage(file);
-      if (!imageUrl) throw new Error('อัปโหลดรูปไม่สำเร็จ');
+      if (!imageUrl) {
+        throw new Error('อัปโหลดรูปไม่สำเร็จ');
+      }
       product.image = imageUrl;
     } else if (isEdit) {
       product.image =
         state.products.find(p => p.code === code)?.image || '';
     }
 
+    // ===== SAVE =====
     if (isEdit) {
       await apiUpdateProduct(product);
 
       const idx = state.products.findIndex(p => p.code === code);
       if (idx !== -1) {
-        state.products[idx] = { ...state.products[idx], ...product };
+        state.products[idx] = {
+          ...state.products[idx],
+          ...product
+        };
       }
     } else {
       const saved = await apiAddProduct(product);
+
       if (saved && saved.code) {
         state.products.push(saved);
         applyFilter();
       } else {
+        // fallback sync
         await loadProducts();
       }
     }
 
   } catch (e) {
+    console.error(e);
     alert(e.message || 'เพิ่ม / แก้ไขสินค้าไม่สำเร็จ');
   } finally {
     state.submitting = false;
     renderUI(); // ✅ ปิด overlay เสมอ
-  }
-}
-
-    const code = getVal('p-code');
-
-    const product = {
-      code,
-      name: getVal('p-name'),
-      price: Number(getVal('p-price')),
-      stock: Number(getVal('p-stock')),
-      category: getVal('p-category'),
-      status: getVal('p-status'),
-      image:
-        imageUrl ||
-        (isEdit
-          ? state.products.find(p => p.code === code)?.image
-          : '') ||
-        ''
-    };
-
-    console.log('PRODUCT PAYLOAD:', product);
-
-    const err = validateProduct(product);
-if (err) {
-  alert(err);
-  state.submitting = false;
-  renderUI();
-  return;
-}
-
-    if (isEdit) {
-      await apiUpdateProduct(product);
-
-      const idx = state.products.findIndex(p => p.code === code);
-      if (idx !== -1) {
-        state.products[idx] = { ...state.products[idx], ...product };
-      }
-    } else {
-      
-      const saved = await apiAddProduct(product);
-
-if (saved && saved.code) {
-  state.products.push(saved);
-  applyFilter();
-} else {
-  await loadProducts(); // fallback sync
-    }
-  }
-
-  } catch (e) {
-    alert(e.message || 'เพิ่มสินค้าไม่สำเร็จ');
-  } finally {
-    state.submitting = false;
-    renderUI(); // ⬅️ render หลัง submit เสร็จจริง
   }
 }
 
