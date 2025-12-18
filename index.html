@@ -395,7 +395,14 @@ button:hover,
   justify-content: center;
   gap: 8px;
 }
-  
+
+  .spinner.in {
+  border-top-color: #16a34a; /* เขียว รับเข้า */
+}
+
+.spinner.out {
+  border-top-color: #dc2626; /* แดง ส่งออก */
+}
 </style>
 
     
@@ -993,18 +1000,21 @@ function showConfirm({ title, message, onConfirm }) {
   const textSpan = card.querySelector('.btn-text');
 
   confirmBtn.onclick = async () => {
-    confirmBtn.classList.add('loading-btn');
-    cancelBtn.disabled = true;
+  confirmBtn.classList.add('loading-btn');
+  cancelBtn.disabled = true;
 
-    textSpan.textContent = 'กำลังบันทึก';
-    const spinner = document.createElement('div');
-    spinner.className = 'spinner';
-    textSpan.before(spinner);
+  textSpan.textContent = 'กำลังบันทึก';
 
-    await onConfirm();
+  const spinner = document.createElement('div');
+  spinner.className =
+    'spinner ' + (message.includes('รับเข้า') ? 'in' : 'out');
 
-    overlay.remove();
-  };
+  textSpan.before(spinner);
+
+  await onConfirm();
+  overlay.remove();
+};
+
 
   cancelBtn.onclick = () => overlay.remove();
 
