@@ -1083,22 +1083,41 @@ if (state.products.length === 0 && !state.loading) {
 
       <button
   ${state.submitting ? 'disabled' : ''}
-  onclick="submitProduct(${isEdit})">
+  style="margin-top:12px;width:100%;padding:12px;background:#38bdf8;"
+  onclick="submitProduct(${isEdit})"
+>
+  ${isEdit ? 'บันทึก' : 'เพิ่มสินค้า'}
+</button>
 
-        style="margin-top:12px;width:100%;padding:12px;background:#38bdf8;">
-        ${isEdit ? 'บันทึก' : 'เพิ่มสินค้า'}
-      </button>
     `;
     app.appendChild(header);
     app.appendChild(card);
   }
 
   async function submitProduct(isEdit = false) {
-  console.log('SUBMIT PRODUCT CALLED');
-
   if (state.submitting) return;
   state.submitting = true;
-  renderUI(); // ⬅️ render overlay ตอนเริ่ม
+
+  try {
+    const code = getVal('p-code');
+
+    const product = {
+      code,
+      name: getVal('p-name'),
+      price: Number(getVal('p-price')),
+      stock: Number(getVal('p-stock')),
+      category: getVal('p-category'),
+      status: getVal('p-status'),
+      image: ''
+    };
+
+    const err = validateProduct(product);
+    if (err) {
+      alert(err);
+      return;
+    }
+
+    renderUI(); // ✅ ค่อยแสดง overlay หลัง validate ผ่าน
 
   try {
     const fileInput = document.getElementById('p-image');
