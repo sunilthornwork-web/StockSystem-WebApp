@@ -1008,17 +1008,22 @@ function drawDashboardChart(history) {
     root.appendChild(exportBtn);
   }
 
-  // ===== LOAD PRODUCTS (once) =====
-  if (state.products.length === 0 && !state.loading) {
+ // ===== LOAD PRODUCTS (once) =====
+if (state.products.length === 0 && !state.loading) {
   state.loading = true;
+  renderUI(); // ⬅️ ให้ overlay แสดง
+
   const data = await apiListProducts();
   if (data) {
     state.products = data;
     applyFilter();
   }
+
   state.loading = false;
-  return; // พอ
+  renderUI(); // ✅ สำคัญมาก
+  return;
 }
+
 
   // ===== PRODUCT LIST =====
   state.products.forEach(p => {
