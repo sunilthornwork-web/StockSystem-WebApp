@@ -635,12 +635,19 @@ async function adjustStock(code, diff) {
 }
   
   async function loadProducts() {
-    const data = await apiListProducts();
-    if (!data) return;
+  state.loading = true;
+  renderUI();
+
+  const data = await apiListProducts();
+  if (data) {
     state.products = data;
     applyFilter();
-    renderUI();
   }
+
+  state.loading = false;
+  renderUI();
+}
+
 
   function applyFilter() {
     state.filteredProducts = state.products.filter(p => {
@@ -1077,9 +1084,9 @@ root.appendChild(passBtn);
 
   if (state.submitting) return;
   state.submitting = true;
+  renderUI(); // ⬅️ render overlay ตอนเริ่ม
 
   try {
-    /* ===== IMAGE UPLOAD ===== */
     const fileInput = document.getElementById('p-image');
     const file = fileInput?.files?.[0] || null;
     let imageUrl = null;
@@ -1089,7 +1096,6 @@ root.appendChild(passBtn);
       if (!imageUrl) return;
     }
 
-    /* ===== BUILD PRODUCT ===== */
     const code = getVal('p-code');
 
     const product = {
@@ -1109,43 +1115,35 @@ root.appendChild(passBtn);
 
     console.log('PRODUCT PAYLOAD:', product);
 
-    /* ===== VALIDATE ===== */
     const err = validateProduct(product);
     if (err) {
       alert(err);
       return;
     }
 
-    /* ===== API ===== */
     if (isEdit) {
       await apiUpdateProduct(product);
 
       const idx = state.products.findIndex(p => p.code === code);
       if (idx !== -1) {
-        state.products[idx] = {
-          ...state.products[idx],
-          ...product
-        };
+        state.products[idx] = { ...state.products[idx], ...product };
       }
-
     } else {
       const saved = await apiAddProduct(product);
-
-      // ✅ สำคัญมาก
       if (saved) {
         state.products.push(saved);
       }
     }
 
-    renderUI();
-
   } catch (e) {
     alert(e.message || 'เพิ่มสินค้าไม่สำเร็จ');
   } finally {
     state.submitting = false;
+    renderUI(); // ⬅️ render หลัง submit เสร็จจริง
   }
 }
- 
+
+   
    /* =========================
      COMMON
   ========================= */
