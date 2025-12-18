@@ -1078,64 +1078,74 @@ root.appendChild(passBtn);
     app.appendChild(card);
   }
 
-  async function submitProduct(isEdit) {
-  /* ===== ROLE GUARD ===== */
-  if (state.role !== 'admin') {
-    alert('สิทธิ์ไม่เพียงพอ');
-    return;
-  }
-
-  /* ===== SUBMIT LOCK ===== */
+  async function submitProduct(isEdit = false) {
   if (state.submitting) return;
   state.submitting = true;
 
-  /* ===== IMAGE UPLOAD ===== */
-  const fileInput = document.getElementById('p-image');
-  const file = fileInput ? fileInput.files[0] : null;
-  let imageUrl = null;
+  try {
+    /* ===== IMAGE UPLOAD ===== */
+    const fileInput = document.getElementById('p-image');
+    const file = fileInput ? fileInput.files[0] : null;
+    let imageUrl = null;
 
-  if (file) {
-    imageUrl = await apiUploadImage(file);
-    if (!imageUrl) {
-      state.submitting = false;
+    if (file) {
+      imageUrl = await apiUploadImage(file);
+      if (!imageUrl) return;
+    }
+
+    /* ===== BUILD PRODUCT ===== */
+    const code = getVal('p-code');
+
+    const product = {
+      code,
+      name: getVal('p-name'),
+      price: Number(getVal('p-price')),
+      stock: Number(getVal('p-stock')),
+      category: getVal('p-category'),
+      status: getVal('p-status'),
+      image:
+        imageUrl ||
+        (isEdit
+          ? state.products.find(p => p.code === code)?.image
+          : '') ||
+        ''
+    };
+
+    /* ===== VALIDATE ===== */
+    const err = validateProduct(product);
+    if (err) {
+      alert(err);
       return;
     }
-  }
 
-  /* ===== BUILD PRODUCT (SAFE) ===== */
-  const product = {
-    code: getVal('p-code'),
-    name: getVal('p-name'),
-    price: Number(getVal('p-price')),
-    stock: Number(getVal('p-stock')),
-    category: getVal('p-category'),
-    status: getVal('p-status'),
-    image: imageUrl || (isEdit ? state.products.find(p => p.code === getVal('p-code'))?.image : '') || ''
-  };
+    /* ===== API ===== */
+    let saved = null;
 
-  /* ===== VALIDATION ===== */
-  const err = validateProduct(product);
-  if (err) {
-    state.error = err;
-    state.submitting = false;
+    if (isEdit) {
+      await apiUpdateProduct(product);
+
+      // 🔁 update state
+      const idx = state.products.findIndex(p => p.code === code);
+      if (idx !== -1) {
+        state.products[idx] = { ...state.products[idx], ...product };
+      }
+    } else {
+      saved = await apiAddProduct(product);
+
+      // 🔥 สำคัญที่สุด
+      if (saved) {
+        state.products.push(saved);
+      }
+    }
+
     renderUI();
-    return;
-  }
 
-  /* ===== API CALL ===== */
-  if (isEdit) {
-    await apiUpdateProduct(product);
-  } else {
-    await apiAddProduct(product);
+  } finally {
+    state.submitting = false;
   }
-
-  /* ===== DONE ===== */
-  state.submitting = false;
-  renderUI();
 }
-
-
-  /* =========================
+ 
+   /* =========================
      COMMON
   ========================= */
 
