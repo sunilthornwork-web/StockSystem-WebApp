@@ -369,6 +369,32 @@ button:hover,
   transform: translateY(-1px) scale(1.02);
   box-shadow: 0 0 36px rgba(250,204,21,0.6);
 }
+
+  /* ===== REAL SPINNER (BUTTON) ===== */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255,255,255,0.5);
+  border-top-color: #7c2d12;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-btn {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.loading-btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
   
 </style>
 
@@ -413,6 +439,8 @@ button:hover,
   color: var(--primary);
   cursor: pointer;
 }
+
+
 </style>
 
 
@@ -912,6 +940,81 @@ const getVal = (id) => {
 <!-- ========================= -->
 <!-- RENDER FUNCTIONS -->
 <!-- ========================= -->
+    <script>
+function showToast(text, type = 'success') {
+  const div = document.createElement('div');
+  div.textContent = text;
+
+  div.style = `
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:14px 22px;
+    border-radius:999px;
+    background:${type === 'success'
+      ? 'linear-gradient(90deg,#fde68a,#facc15)'
+      : '#ef4444'};
+    color:#4a044e;
+    font-weight:700;
+    box-shadow:0 0 30px rgba(250,204,21,.5);
+    z-index:9999;
+  `;
+
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 2200);
+}
+</script>
+
+  <script>
+function showConfirm({ title, message, onConfirm }) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+
+  const card = document.createElement('div');
+  card.className = 'modal-card';
+
+  card.innerHTML = `
+    <h3>${title}</h3>
+    <p style="margin:10px 0">${message}</p>
+
+    <div style="display:flex;gap:10px">
+      <button class="admin-stock-btn" id="confirmBtn">
+        <span class="loading-btn-content">
+          <span class="btn-text">ยืนยัน</span>
+        </span>
+      </button>
+      <button class="badge" id="cancelBtn">ยกเลิก</button>
+    </div>
+  `;
+
+  const confirmBtn = card.querySelector('#confirmBtn');
+  const cancelBtn = card.querySelector('#cancelBtn');
+  const textSpan = card.querySelector('.btn-text');
+
+  confirmBtn.onclick = async () => {
+    confirmBtn.classList.add('loading-btn');
+    cancelBtn.disabled = true;
+
+    textSpan.textContent = 'กำลังบันทึก';
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner';
+    textSpan.before(spinner);
+
+    await onConfirm();
+
+    overlay.remove();
+  };
+
+  cancelBtn.onclick = () => overlay.remove();
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
+</script>
+
+
+
 <script>
 function openStockAdjustModal(code) {
   const overlay = document.createElement('div');
@@ -955,21 +1058,25 @@ async function submitStockAdjust(code) {
   const qty = Number(document.getElementById('stock-qty').value);
 
   if (!qty || qty <= 0) {
-    alert('กรุณากรอกจำนวนให้ถูกต้อง');
+    showToast('❌ กรุณากรอกจำนวนให้ถูกต้อง', 'error');
     return;
   }
 
   const diff = type === 'in' ? qty : -qty;
-
-  const ok = confirm(
-    type === 'in'
-      ? `ยืนยันรับเข้า ${qty} ชิ้น?`
-      : `ยืนยันส่งออก ${qty} ชิ้น?`
-  );
-  if (!ok) return;
-
-  await adjustStock(code, diff);
   document.querySelector('.modal-overlay')?.remove();
+  
+  showConfirm({
+    title: '📦 ยืนยันการปรับสต๊อก',
+    message: `
+      <div style="text-align:center">
+        <b>${type === 'in' ? 'รับเข้า' : 'ส่งออก'}</b><br/>
+        จำนวน <b>${qty}</b> ชิ้น
+      </div>
+    `,
+    onConfirm: async () => {
+      await adjustStock(code, diff);
+    }
+  });
 }
 </script>
 
@@ -1053,22 +1160,26 @@ function openProductDetail(p) {
      VIEWER SUPPORT
   ========================= */
 async function adjustStock(code, diff) {
-  if (state.role !== 'admin' && state.role !== 'staff') {
-    alert('สิทธิ์ไม่เพียงพอ');
-    return;
-  }
-
   if (state.submitting) return;
   state.submitting = true;
-  renderUI();
 
   try {
     const res = await apiUpdateStock(code, diff);
-    if (!res) {
-      alert('อัปเดตสต๊อกไม่สำเร็จ');
+    if (!res) throw new Error();
+
+    // ✅ อัปเดต state ทันที (ไม่ renderUI)
+    const p = state.products.find(p => p.code === code);
+    if (p) {
+      p.stock += diff;
     }
+
+    showToast('📦 อัปเดตสต๊อกแล้ว');
+  } catch {
+    showToast('❌ อัปเดตไม่สำเร็จ', 'error');
   } finally {
     state.submitting = false;
+
+    // ✅ ค่อย renderUI ทีเดียว หลังจบทุกอย่าง
     renderUI();
   }
 }
