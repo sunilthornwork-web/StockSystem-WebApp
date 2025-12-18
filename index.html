@@ -1094,7 +1094,7 @@ if (state.products.length === 0 && !state.loading) {
     app.appendChild(card);
   }
 
-  async function submitProduct(isEdit = false) {
+async function submitProduct(isEdit = false) {
   if (state.submitting) return;
   state.submitting = true;
 
@@ -1111,25 +1111,53 @@ if (state.products.length === 0 && !state.loading) {
       image: ''
     };
 
+    console.log('PRODUCT PAYLOAD:', product);
+
     const err = validateProduct(product);
     if (err) {
       alert(err);
-      return;
+      return; // ✅ ออกได้ เพราะมี finally
     }
 
-    renderUI(); // ✅ ค่อยแสดง overlay หลัง validate ผ่าน
+    renderUI(); // แสดง overlay หลัง validate ผ่าน
 
-  try {
     const fileInput = document.getElementById('p-image');
     const file = fileInput?.files?.[0] || null;
-    let imageUrl = null;
 
     if (file) {
-  imageUrl = await apiUploadImage(file);
-  if (!imageUrl) {
-    throw new Error('อัปโหลดรูปไม่สำเร็จ');
+      const imageUrl = await apiUploadImage(file);
+      if (!imageUrl) throw new Error('อัปโหลดรูปไม่สำเร็จ');
+      product.image = imageUrl;
+    } else if (isEdit) {
+      product.image =
+        state.products.find(p => p.code === code)?.image || '';
+    }
+
+    if (isEdit) {
+      await apiUpdateProduct(product);
+
+      const idx = state.products.findIndex(p => p.code === code);
+      if (idx !== -1) {
+        state.products[idx] = { ...state.products[idx], ...product };
+      }
+    } else {
+      const saved = await apiAddProduct(product);
+      if (saved && saved.code) {
+        state.products.push(saved);
+        applyFilter();
+      } else {
+        await loadProducts();
+      }
+    }
+
+  } catch (e) {
+    alert(e.message || 'เพิ่ม / แก้ไขสินค้าไม่สำเร็จ');
+  } finally {
+    state.submitting = false;
+    renderUI(); // ✅ ปิด overlay เสมอ
   }
 }
+
     const code = getVal('p-code');
 
     const product = {
