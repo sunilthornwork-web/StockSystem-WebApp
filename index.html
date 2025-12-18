@@ -1010,16 +1010,15 @@ function drawDashboardChart(history) {
 
   // ===== LOAD PRODUCTS (once) =====
   if (state.products.length === 0 && !state.loading) {
-    state.loading = true;
-    const data = await apiListProducts();
-    if (data) {
-      state.products = data;
-      applyFilter();
-    }
-    state.loading = false;
-    renderUI();
-    return;
+  state.loading = true;
+  const data = await apiListProducts();
+  if (data) {
+    state.products = data;
+    applyFilter();
   }
+  state.loading = false;
+  return; // พอ
+}
 
   // ===== PRODUCT LIST =====
   state.products.forEach(p => {
@@ -1042,60 +1041,6 @@ function drawDashboardChart(history) {
   });
 }
 
-
-    
-        /* ===== ADMIN ONLY ===== */
-    if (state.role === 'admin') {
-      const addBtn = document.createElement('button');
-      addBtn.className = 'card';
-      addBtn.innerHTML = '➕ เพิ่มสินค้าใหม่';
-      addBtn.onclick = () => openProductForm();
-      root.appendChild(addBtn);
-
-      const exportBtn = document.createElement('button');
-      exportBtn.className = 'card';
-      exportBtn.innerHTML = '📤 Export CSV';
-      exportBtn.onclick = () => exportCSV();
-      root.appendChild(exportBtn);
-    }
-
-    /* ===== LOAD PRODUCTS ===== */
-    if (state.loading || state.submitting) {
-  renderOverlay(app);
-}
-    if (state.error) return root.appendChild(renderError());
-
-    if (state.products.length === 0) {
-  const data = await apiListProducts();
-  if (!data) return;
-  state.products = data;
-    }
-
-
-    state.products.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'card admin';
-      card.innerHTML = `
-        <b>${p.name}</b> (${p.code})<br/>
-        สต๊อก: <b>${p.stock}</b><br/>
-        สถานะ: ${p.status}<br/><br/>
-
-        <button onclick="adjustStock('${p.code}',1)">＋</button>
-        <button onclick="adjustStock('${p.code}',-1)">－</button>
-        ${state.role === 'admin'
-  ? `<button onclick="showStockHistory('${p.code}')">📊 History</button>`
-  : ''}
-
-      
-
-        ${state.role === 'admin'
-          ? `<button onclick="openProductForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>`
-          
-          : ''}
-      `;
-      root.appendChild(card);
-    });
-  }
   /* =========================
      PRODUCT FORM
   ========================= */
@@ -1181,10 +1126,12 @@ function drawDashboardChart(history) {
     console.log('PRODUCT PAYLOAD:', product);
 
     const err = validateProduct(product);
-    if (err) {
-      alert(err);
-      return;
-    }
+if (err) {
+  alert(err);
+  state.submitting = false;
+  renderUI();
+  return;
+}
 
     if (isEdit) {
       await apiUpdateProduct(product);
