@@ -145,6 +145,19 @@ button:hover,
   background-position: center;
 }
 
+  /* ===== PRODUCT CODE ===== */
+.product-code {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,#e9d5ff,#c4b5fd);
+  color: #4c1d95;
+  margin-bottom: 6px;
+  box-shadow: 0 0 8px rgba(255,255,255,0.4);
+}
+
 .product-name {
   font-size: 0.95rem;
   font-weight: 600;
@@ -1184,6 +1197,10 @@ root.appendChild(header);
   </div>
 
   <div class="product-name">${p.name}</div>
+
+  <div class="product-code">
+    🆔 ${p.code}
+  </div>
 
   <div class="product-price">฿${p.price}</div>
 
