@@ -124,6 +124,49 @@
   }
 </style>
 
+    <style>
+/* ===== PRODUCT DETAIL MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  width: 92%;
+  max-width: 420px;
+  padding: 16px;
+  box-shadow: var(--glow);
+}
+
+.modal-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: #020617;
+  margin-bottom: 12px;
+}
+
+.modal-close {
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--primary);
+  cursor: pointer;
+}
+</style>
+
+
 
   <!-- ========================= -->
   <!-- APP ROOT -->
@@ -621,6 +664,47 @@ const getVal = (id) => {
 <!-- RENDER FUNCTIONS -->
 <!-- ========================= -->
 <script>
+function openProductDetail(p) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = () => overlay.remove();
+
+  const card = document.createElement('div');
+  card.className = 'modal-card';
+  card.onclick = e => e.stopPropagation(); // กันคลิกทะลุ
+
+  card.innerHTML = `
+    <div class="modal-close" onclick="this.closest('.modal-overlay').remove()">
+      ✕ ปิด
+    </div>
+
+    <div class="modal-img"
+      style="background-image:url('${p.image || ''}')">
+    </div>
+
+    <h3 style="margin:4px 0">${p.name}</h3>
+
+    <div class="product-price">฿${p.price}</div>
+
+    <p>📦 คงเหลือ: <b>${p.stock}</b></p>
+    <p>🏷️ หมวด: ${p.category}</p>
+    <p>🚚 สถานะ: ${p.status || '-'}</p>
+
+    <p style="font-size:0.75rem;color:#94a3b8">
+      อัปเดตล่าสุด:
+      ${p.updatedAt
+        ? new Date(p.updatedAt).toLocaleString('th-TH')
+        : '-'}
+    </p>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
+</script>
+
+    
+<script>
   /* =========================
      VIEWER SUPPORT
   ========================= */
@@ -936,46 +1020,37 @@ function drawDashboardChart(history) {
   }
 
   function renderProductGrid() {
-    const grid = document.createElement('div');
-    grid.className = 'grid';
+  const grid = document.createElement('div');
+  grid.className = 'grid';
 
-    state.filteredProducts.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'product-card';
-      card.innerHTML = `
-  <div class="product-img"
-    style="background-image:url('${p.image || ''}');">
-  </div>
+  state.filteredProducts.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.onclick = () => openProductDetail(p); // ✅ คลิกทั้ง card
 
-  <div class="product-name">${p.name}</div>
+    card.innerHTML = `
+      <div class="product-img"
+        style="background-image:url('${p.image || ''}');">
+      </div>
 
-  <div class="product-price">฿${p.price}</div>
+      <div class="product-name">${p.name}</div>
 
-  <div style="font-size:0.8rem;color:#cbd5f5;margin-top:4px;">
-    จำนวนคงเหลือ: <b>${p.stock}</b>
-  </div>
+      <div class="product-price">฿${p.price}</div>
 
-  <div style="font-size:0.8rem;color:#a5b4fc;">
-    สถานะ: ${p.status || '-'}
-  </div>
+      <div style="font-size:0.8rem;color:#cbd5f5;margin-top:4px;">
+        จำนวนคงเหลือ: <b>${p.stock}</b>
+      </div>
 
-  <div style="
-    font-size:0.7rem;
-    color:#94a3b8;
-    margin-top:6px;
-  ">
-    อัปเดตล่าสุด:
-    ${p.updatedAt
-      ? new Date(p.updatedAt).toLocaleString('th-TH')
-      : '-'}
-  </div>
-`;
+      <div style="font-size:0.8rem;color:#a5b4fc;">
+        สถานะ: ${p.status || '-'}
+      </div>
+    `;
 
-      grid.appendChild(card);
-    });
+    grid.appendChild(card);
+  });
 
-    return grid;
-  }
+  return grid;
+}
 
   /* =========================
      ADMIN DASHBOARD
