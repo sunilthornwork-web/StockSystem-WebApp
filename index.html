@@ -1156,7 +1156,7 @@ async function submitProduct(isEdit = false) {
     alert(e.message || 'เพิ่ม / แก้ไขสินค้าไม่สำเร็จ');
   } finally {
     state.submitting = false;
-    renderUI(); // ✅ เรียกได้ตรงนี้เท่านั้น
+    renderUI(); // ✅ มีแค่ตรงนี้ที่เรียก
   }
 }
 
