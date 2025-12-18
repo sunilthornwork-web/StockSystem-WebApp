@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StockBuilder</title>
+  <link rel="icon" href="data:,">  
 </head>
   <body>
   <!-- ========================= -->
@@ -605,6 +606,18 @@ async function changeUserRole(username, role) {
 
 </script>
 
+    
+   <script>
+/* =========================
+   SAFE DOM VALUE HELPER
+   (SPA / Prevent null crash)
+========================= */
+const getVal = (id) => {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+};
+</script>
+
 <!-- ========================= -->
 <!-- RENDER FUNCTIONS -->
 <!-- ========================= -->
@@ -1066,60 +1079,61 @@ root.appendChild(passBtn);
   }
 
   async function submitProduct(isEdit) {
-    /* ===== ROLE GUARD ===== */
-    if (state.role !== 'admin') {
-      alert('สิทธิ์ไม่เพียงพอ');
-      return;
-    }
+  /* ===== ROLE GUARD ===== */
+  if (state.role !== 'admin') {
+    alert('สิทธิ์ไม่เพียงพอ');
+    return;
+  }
 
-    /* ===== SUBMIT LOCK ===== */
-    if (state.submitting) return;
-    state.submitting = true;
+  /* ===== SUBMIT LOCK ===== */
+  if (state.submitting) return;
+  state.submitting = true;
 
-    /* ===== IMAGE UPLOAD ===== */
-    const fileInput = document.getElementById('p-image');
-    const file = fileInput ? fileInput.files[0] : null;
-    let imageUrl = null;
+  /* ===== IMAGE UPLOAD ===== */
+  const fileInput = document.getElementById('p-image');
+  const file = fileInput ? fileInput.files[0] : null;
+  let imageUrl = null;
 
-    if (file) {
-      imageUrl = await apiUploadImage(file);
-      if (!imageUrl) {
-        state.submitting = false;
-        return;
-      }
-    }
-
-    /* ===== BUILD PRODUCT ===== */
-    const product = {
-      code: document.getElementById('p-code').value,
-      name: document.getElementById('p-name').value,
-      price: Number(document.getElementById('p-price').value),
-      stock: Number(document.getElementById('p-stock').value),
-      category: document.getElementById('p-category').value,
-      status: document.getElementById('p-status').value,
-      image: imageUrl
-    };
-
-    /* ===== VALIDATION ===== */
-    const err = validateProduct(product);
-    if (err) {
-      state.error = err;
+  if (file) {
+    imageUrl = await apiUploadImage(file);
+    if (!imageUrl) {
       state.submitting = false;
-      renderUI();
       return;
     }
+  }
 
-    /* ===== API CALL ===== */
-    if (isEdit) {
-      await apiUpdateProduct(product);
-          } else {
-      await apiAddProduct(product);
-          }
+  /* ===== BUILD PRODUCT (SAFE) ===== */
+  const product = {
+    code: getVal('p-code'),
+    name: getVal('p-name'),
+    price: Number(getVal('p-price')),
+    stock: Number(getVal('p-stock')),
+    category: getVal('p-category'),
+    status: getVal('p-status'),
+    image: imageUrl || (isEdit ? state.products.find(p => p.code === getVal('p-code'))?.image : '') || ''
+  };
 
-    /* ===== DONE ===== */
+  /* ===== VALIDATION ===== */
+  const err = validateProduct(product);
+  if (err) {
+    state.error = err;
     state.submitting = false;
     renderUI();
+    return;
   }
+
+  /* ===== API CALL ===== */
+  if (isEdit) {
+    await apiUpdateProduct(product);
+  } else {
+    await apiAddProduct(product);
+  }
+
+  /* ===== DONE ===== */
+  state.submitting = false;
+  renderUI();
+}
+
 
   /* =========================
      COMMON
