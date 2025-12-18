@@ -11,21 +11,6 @@
 <!-- UI STYLE (STEP 2) -->
 <!-- ========================= -->
 <style>
-
- /* =========================
-   PRODUCT CODE & CATEGORY BADGE
-========================= */
-.product-code,
-.product-category {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin-bottom: 6px;
-  box-shadow: 0 0 8px rgba(255,255,255,0.4);
-}
-
 /* =========================
    CATEGORY COLORS
 ========================= */
@@ -155,37 +140,6 @@ button:hover,
   box-shadow: var(--glow);
 }
 
-/* ===== GRID ===== */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-}
-
-/* ===== PRODUCT CARD ===== */
-.product-card {
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,0.32),
-    rgba(255,255,255,0.14)
-  );
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 14px;
-  backdrop-filter: blur(16px);
-  box-shadow: var(--glow-soft);
-}
-
-.product-img {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 14px;
-  background-color: rgba(255,255,255,0.25);
-  margin-bottom: 10px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
 
 /* ===== ADMIN ACCENT ===== */
 .admin {
@@ -203,51 +157,6 @@ button:hover,
   background: linear-gradient(90deg,#fff3c4,#ffd54f);
   border: 2px solid rgba(255,255,255,0.7);
   box-shadow: 0 0 30px rgba(255,215,79,0.6);
-}
-
-/* ===== PRODUCT INFO ENHANCE ===== */
-.product-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 6px;
-}
-
-.product-price {
-  display: inline-block;
-  background: linear-gradient(90deg,#fff3c4,#ffd54f);
-  color: #7c2d12;
-  font-weight: 800;
-  font-size: 0.9rem;
-  padding: 4px 12px;
-  border-radius: 999px;
-  margin-bottom: 6px;
-}
-
-/* ===== PRODUCT META ===== */
-.product-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.meta-pill {
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.85);
-  color: #4a044e;
-  font-weight: 600;
-  box-shadow: 0 0 10px rgba(255,255,255,0.35);
-}
-
-.meta-stock {
-  background: linear-gradient(90deg,#e0f2fe,#bae6fd);
-}
-
-.meta-status {
-  background: linear-gradient(90deg,#dcfce7,#86efac);
 }
 
   /* ===== HAMBURGER ===== */
@@ -286,18 +195,26 @@ button:hover,
   margin-bottom: 10px;
 }
 
-</style>
-
-    <style>
-/* =========================
-   PRODUCT CARD – CLEAN FINAL
-========================= */
+/* ===== PRODUCT CARD (FINAL SINGLE SOURCE) ===== */
 
 .grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
   align-items: stretch;
 }
 
 .product-card {
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.32),
+    rgba(255,255,255,0.14)
+  );
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 14px;
+  box-shadow: var(--glow-soft);
+
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -306,36 +223,55 @@ button:hover,
   height: 100%;
 }
 
-/* ===== IMAGE ===== */
 .product-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  background-color: rgba(255,255,255,0.25);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   margin-bottom: 6px;
 }
 
-/* ===== NAME ===== */
 .product-name {
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.35;
   min-height: 2.7em;
+  color: #ffffff;
 }
 
-/* ===== CODE + CATEGORY (SAME ROW GUARANTEE) ===== */
-.product-code,
+  .product-code,
 .product-category {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: 2px 3px;
+
+  font-size: 0.7rem;
+  font-weight: 700;
+
+  padding: 4px 10px;
+  border-radius: 999px;
+
+  margin: 4px auto;
   white-space: nowrap;
+
+  box-shadow: 0 0 8px rgba(255,255,255,0.4);
 }
 
-/* ===== PRICE ===== */
+
 .product-price {
   align-self: center;
+  background: linear-gradient(90deg,#fff3c4,#ffd54f);
+  color: #7c2d12;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 4px 12px;
+  border-radius: 999px;
   margin: 6px 0;
 }
 
-/* ===== META ===== */
 .product-meta {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -345,15 +281,14 @@ button:hover,
 
 .meta-pill {
   font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.85);
+  color: #4a044e;
+  font-weight: 600;
   text-align: center;
-  justify-content: center;
 }
-
-/* ===== INPUT BALANCE ===== */
-.card input,
-.card select {
-  font-size: 0.95rem;
-}
+  
 </style>
 
     
