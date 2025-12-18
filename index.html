@@ -591,7 +591,7 @@ async function changeUserRole(username, role) {
 <script>
   function validateProduct(p) {
     if (!p.code) return 'ไม่มีรหัสสินค้า';
-    if (!p.name) return 'ไม่มีชื่อสินค้า';
+    if (!p.name || !p.name.trim()) return 'ไม่มีชื่อสินค้า';
     if (isNaN(p.price) || p.price < 0) return 'ราคาผิด';
     if (isNaN(p.stock)) return 'สต๊อกผิด';
     if (!p.category) return 'ไม่มีหมวด';
@@ -620,18 +620,24 @@ const getVal = (id) => {
      VIEWER SUPPORT
   ========================= */
 async function adjustStock(code, diff) {
-    if (state.role !== 'admin' && state.role !== 'staff') {
-      alert('สิทธิ์ไม่เพียงพอ');
-      return;
+  if (state.role !== 'admin' && state.role !== 'staff') {
+    alert('สิทธิ์ไม่เพียงพอ');
+    return;
+  }
+
+  if (state.submitting) return;
+  state.submitting = true;
+  renderUI();
+
+  try {
+    const res = await apiUpdateStock(code, diff);
+    if (!res) {
+      alert('อัปเดตสต๊อกไม่สำเร็จ');
     }
-
-    if (state.submitting) return;
-    state.submitting = true;
-
-    await apiUpdateStock(code, diff);
-   
+  } finally {
     state.submitting = false;
     renderUI();
+  }
 }
   
   async function loadProducts() {
@@ -672,7 +678,9 @@ async function adjustStock(code, diff) {
   }
 
   function renderCategoryOptions() {
-    const categories = [...new Set(state.products.map(p => p.category))];
+    const categories = [
+  ...new Set(state.products.map(p => p.category.toLowerCase()))
+];
     return categories.map(c => `<option value="${c}">${c}</option>`).join('');
   }
 
@@ -949,40 +957,91 @@ function drawDashboardChart(history) {
   ========================= */
 
   async function renderAdmin(root) {
-    const header = document.createElement('div');
-    header.className = 'header';
-    header.innerHTML = `
-      <h1>🧑‍💼 Dashboard (${state.role})</h1>
-      <button class="badge" onclick="logoutAdmin()">Logout</button>
+  // ===== HEADER =====
+  const header = document.createElement('div');
+  header.className = 'header';
+  header.innerHTML = `
+    <h1>🧑‍💼 Dashboard (${state.role})</h1>
+    <button class="badge" onclick="logoutAdmin()">Logout</button>
+  `;
+  root.appendChild(header);
+
+  // ===== ADMIN MENU =====
+  if (state.role === 'admin') {
+    const dashBtn = document.createElement('button');
+    dashBtn.className = 'card';
+    dashBtn.innerHTML = '📊 Dashboard Overview';
+    dashBtn.onclick = renderDashboard;
+    root.appendChild(dashBtn);
+
+    const logBtn = document.createElement('button');
+    logBtn.className = 'card';
+    logBtn.innerHTML = '🧾 Audit Logs';
+    logBtn.onclick = renderAuditLogs;
+    root.appendChild(logBtn);
+
+    const userBtn = document.createElement('button');
+    userBtn.className = 'card';
+    userBtn.innerHTML = '👥 User Management';
+    userBtn.onclick = renderUserManagement;
+    root.appendChild(userBtn);
+
+    const passBtn = document.createElement('button');
+    passBtn.className = 'card';
+    passBtn.innerHTML = '🔑 เปลี่ยนรหัสผ่าน';
+    passBtn.onclick = renderChangePassword;
+    root.appendChild(passBtn);
+  }
+
+  // ===== ADMIN ACTIONS =====
+  if (state.role === 'admin') {
+    const addBtn = document.createElement('button');
+    addBtn.className = 'card';
+    addBtn.innerHTML = '➕ เพิ่มสินค้าใหม่';
+    addBtn.onclick = () => openProductForm();
+    root.appendChild(addBtn);
+
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'card';
+    exportBtn.innerHTML = '📤 Export CSV';
+    exportBtn.onclick = exportCSV;
+    root.appendChild(exportBtn);
+  }
+
+  // ===== LOAD PRODUCTS (once) =====
+  if (state.products.length === 0 && !state.loading) {
+    state.loading = true;
+    const data = await apiListProducts();
+    if (data) {
+      state.products = data;
+      applyFilter();
+    }
+    state.loading = false;
+    renderUI();
+    return;
+  }
+
+  // ===== PRODUCT LIST =====
+  state.products.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card admin';
+    card.innerHTML = `
+      <b>${p.name}</b> (${p.code})<br/>
+      สต๊อก: <b>${p.stock}</b><br/>
+      สถานะ: ${p.status}<br/><br/>
+
+      <button onclick="adjustStock('${p.code}', 1)">＋</button>
+      <button onclick="adjustStock('${p.code}', -1)">－</button>
+
+      ${state.role === 'admin'
+        ? `<button onclick="showStockHistory('${p.code}')">📊 History</button>
+           <button onclick="openProductForm(${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button>`
+        : ''}
     `;
-    root.appendChild(header);
-
-    if (state.role === 'admin') {
-  const dashBtn = document.createElement('button');
-  dashBtn.className = 'card';
-  dashBtn.innerHTML = '📊 Dashboard Overview';
-  dashBtn.onclick = () => renderDashboard();
-  root.appendChild(dashBtn);
-
-      const logBtn = document.createElement('button');
-logBtn.className = 'card';
-logBtn.innerHTML = '🧾 Audit Logs';
-logBtn.onclick = () => renderAuditLogs();
-root.appendChild(logBtn);
-
-      const userBtn = document.createElement('button');
-userBtn.className = 'card';
-userBtn.innerHTML = '👥 User Management';
-userBtn.onclick = () => renderUserManagement();
-root.appendChild(userBtn);
-
-      const passBtn = document.createElement('button');
-passBtn.className = 'card';
-passBtn.innerHTML = '🔑 เปลี่ยนรหัสผ่าน';
-passBtn.onclick = () => renderChangePassword();
-root.appendChild(passBtn);
-
+    root.appendChild(card);
+  });
 }
+
 
     
         /* ===== ADMIN ONLY ===== */
@@ -1001,7 +1060,9 @@ root.appendChild(passBtn);
     }
 
     /* ===== LOAD PRODUCTS ===== */
-    if (state.loading) return root.appendChild(renderLoading());
+    if (state.loading || state.submitting) {
+  renderOverlay(app);
+}
     if (state.error) return root.appendChild(renderError());
 
     if (state.products.length === 0) {
@@ -1070,7 +1131,10 @@ root.appendChild(passBtn);
       <input id="p-image" type="file" accept="image/*" />
       ${product?.image ? `<img src="${product.image}" style="width:100%;border-radius:12px;margin-top:8px;" />` : ''}
 
-      <button onclick="submitProduct(${isEdit})"
+      <button
+  ${state.submitting ? 'disabled' : ''}
+  onclick="submitProduct(${isEdit})">
+
         style="margin-top:12px;width:100%;padding:12px;background:#38bdf8;">
         ${isEdit ? 'บันทึก' : 'เพิ่มสินค้า'}
       </button>
@@ -1092,10 +1156,11 @@ root.appendChild(passBtn);
     let imageUrl = null;
 
     if (file) {
-      imageUrl = await apiUploadImage(file);
-      if (!imageUrl) return;
-    }
-
+  imageUrl = await apiUploadImage(file);
+  if (!imageUrl) {
+    throw new Error('อัปโหลดรูปไม่สำเร็จ');
+  }
+}
     const code = getVal('p-code');
 
     const product = {
@@ -1129,11 +1194,16 @@ root.appendChild(passBtn);
         state.products[idx] = { ...state.products[idx], ...product };
       }
     } else {
+      
       const saved = await apiAddProduct(product);
-      if (saved) {
-        state.products.push(saved);
-      }
+
+if (saved && saved.code) {
+  state.products.push(saved);
+  applyFilter();
+} else {
+  await loadProducts(); // fallback sync
     }
+  }
 
   } catch (e) {
     alert(e.message || 'เพิ่มสินค้าไม่สำเร็จ');
