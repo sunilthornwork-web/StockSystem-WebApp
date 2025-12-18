@@ -165,6 +165,66 @@ button:hover,
 .admin {
   border-left: 4px solid var(--primary);
 }
+
+  /* ===== BRAND TITLE ===== */
+.brand-title {
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  color: #7c2d12;
+  background: linear-gradient(90deg,#fff3c4,#ffd54f);
+  border: 2px solid rgba(255,255,255,0.7);
+  box-shadow: 0 0 30px rgba(255,215,79,0.6);
+}
+
+/* ===== PRODUCT INFO ENHANCE ===== */
+.product-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.product-price {
+  display: inline-block;
+  background: linear-gradient(90deg,#fff3c4,#ffd54f);
+  color: #7c2d12;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+
+/* ===== PRODUCT META ===== */
+.product-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.meta-pill {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.85);
+  color: #4a044e;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(255,255,255,0.35);
+}
+
+.meta-stock {
+  background: linear-gradient(90deg,#e0f2fe,#bae6fd);
+}
+
+.meta-status {
+  background: linear-gradient(90deg,#dcfce7,#86efac);
+}
+
+  
 </style>
 
     <style>
@@ -1029,12 +1089,15 @@ function drawDashboardChart(history) {
 
   async function renderViewer(root) {
     const header = document.createElement('div');
-    header.className = 'header';
-    header.innerHTML = `
-      <h1>📦 StockBuilder</h1>
-      <button class="badge" onclick="renderAdminLogin()">Admin</button>
-    `;
-    root.appendChild(header);
+header.className = 'header';
+header.innerHTML = `
+  <div class="brand-title">
+    ⭐ ล้อพาณิชย์ ⭐
+  </div>
+  <button class="badge" onclick="renderAdminLogin()">Admin</button>
+`;
+root.appendChild(header);
+
 
     if (state.loading) return root.appendChild(renderLoading());
     if (state.error) return root.appendChild(renderError());
@@ -1072,22 +1135,23 @@ function drawDashboardChart(history) {
     card.onclick = () => openProductDetail(p); // ✅ คลิกทั้ง card
 
     card.innerHTML = `
-      <div class="product-img"
-        style="background-image:url('${p.image || ''}');">
-      </div>
+  <div class="product-img"
+    style="background-image:url('${p.image || ''}');">
+  </div>
 
-      <div class="product-name">${p.name}</div>
+  <div class="product-name">${p.name}</div>
 
-      <div class="product-price">฿${p.price}</div>
+  <div class="product-price">฿${p.price}</div>
 
-      <div style="font-size:0.8rem;color:#cbd5f5;margin-top:4px;">
-        จำนวนคงเหลือ: <b>${p.stock}</b>
-      </div>
-
-      <div style="font-size:0.8rem;color:#a5b4fc;">
-        สถานะ: ${p.status || '-'}
-      </div>
-    `;
+  <div class="product-meta">
+    <div class="meta-pill meta-stock">
+      📦 คงเหลือ ${p.stock}
+    </div>
+    <div class="meta-pill meta-status">
+      🚚 ${p.status || '-'}
+    </div>
+  </div>
+`;
 
     grid.appendChild(card);
   });
