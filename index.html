@@ -11,6 +11,48 @@
 <!-- UI STYLE (STEP 2) -->
 <!-- ========================= -->
 <style>
+
+ /* =========================
+   PRODUCT CODE & CATEGORY BADGE
+========================= */
+.product-code,
+.product-category {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+  box-shadow: 0 0 8px rgba(255,255,255,0.4);
+}
+
+/* =========================
+   CATEGORY COLORS
+========================= */
+.code-bag {
+  background: linear-gradient(90deg,#fbcfe8,#f472b6);
+  color: #831843;
+}
+
+.code-jewelry {
+  background: linear-gradient(90deg,#fde68a,#facc15);
+  color: #713f12;
+}
+
+.code-utility {
+  background: linear-gradient(90deg,#bfdbfe,#60a5fa);
+  color: #1e3a8a;
+}
+
+.code-doll {
+  background: linear-gradient(90deg,#ddd6fe,#a78bfa);
+  color: #4c1d95;
+}
+
+.code-other {
+  background: linear-gradient(90deg,#e5e7eb,#9ca3af);
+  color: #1f2933;
+}
 /* ===== FONT ===== */
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
 
@@ -145,35 +187,6 @@ button:hover,
   background-position: center;
 }
 
-  /* ===== PRODUCT CODE ===== */
-.product-code {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: linear-gradient(90deg,#e9d5ff,#c4b5fd);
-  color: #4c1d95;
-  margin-bottom: 6px;
-  box-shadow: 0 0 8px rgba(255,255,255,0.4);
-}
-
-.product-name {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.product-price {
-  color: #7c2d12;
-  background: linear-gradient(90deg,#fff3c4,#ffd54f);
-  padding: 4px 10px;
-  border-radius: 999px;
-  display: inline-block;
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
 /* ===== ADMIN ACCENT ===== */
 .admin {
   border-left: 4px solid var(--primary);
@@ -273,7 +286,7 @@ button:hover,
   margin-bottom: 10px;
 }
 
-  
+ 
 </style>
 
     <style>
@@ -906,10 +919,15 @@ async function adjustStock(code, diff) {
 
   function applyFilter() {
     state.filteredProducts = state.products.filter(p => {
-      const matchSearch =
-        p.name.toLowerCase().includes(state.search.toLowerCase());
+      const keyword = state.search.toLowerCase();
+
+const matchSearch =
+  p.name.toLowerCase().includes(keyword) ||
+  p.code.toLowerCase().includes(keyword);
+
       const matchCategory =
-        state.category === 'all' || p.category === state.category;
+  state.category === 'all' ||
+  p.category.toLowerCase() === state.category.toLowerCase();
       return matchSearch && matchCategory;
     });
   }
@@ -1182,6 +1200,19 @@ root.appendChild(header);
     root.appendChild(renderProductGrid());
   }
 
+  /* =========================
+   CATEGORY → COLOR CLASS
+========================= */
+function getCategoryClass(category = '') {
+  const c = category.toLowerCase();
+
+  if (c.includes('กระเป๋า')) return 'code-bag';
+  if (c.includes('เครื่องประดับ')) return 'code-jewelry';
+  if (c.includes('ของใช้')) return 'code-utility';
+  if (c.includes('ตุ๊กตา') || c.includes('ฟิก')) return 'code-doll';
+
+  return 'code-other';
+}
   function renderProductGrid() {
   const grid = document.createElement('div');
   grid.className = 'grid';
@@ -1189,37 +1220,43 @@ root.appendChild(header);
   state.filteredProducts.forEach(p => {
     const card = document.createElement('div');
     card.className = 'product-card';
-    card.onclick = () => openProductDetail(p); // ✅ คลิกทั้ง card
+    card.onclick = () => openProductDetail(p);
+
+    // ✅ คำนวณ class ตรงนี้ (นอก HTML)
+    const cls = getCategoryClass(p.category);
 
     card.innerHTML = `
-  <div class="product-img"
-    style="background-image:url('${p.image || ''}');">
-  </div>
+      <div class="product-img"
+        style="background-image:url('${p.image || ''}');">
+      </div>
 
-  <div class="product-name">${p.name}</div>
+      <div class="product-name">${p.name}</div>
 
-  <div class="product-code">
-    🆔 ${p.code}
-  </div>
+      <div class="product-code ${cls}">
+        🆔 ${p.code}
+      </div>
 
-  <div class="product-price">฿${p.price}</div>
+      <div class="product-category ${cls}">
+        🏷️ ${p.category}
+      </div>
 
-  <div class="product-meta">
-    <div class="meta-pill meta-stock">
-      📦 คงเหลือ ${p.stock}
-    </div>
-    <div class="meta-pill meta-status">
-      🚚 ${p.status || '-'}
-    </div>
-  </div>
-`;
+      <div class="product-price">฿${p.price}</div>
+
+      <div class="product-meta">
+        <div class="meta-pill meta-stock">
+          📦 คงเหลือ ${p.stock}
+        </div>
+        <div class="meta-pill meta-status">
+          🚚 ${p.status || '-'}
+        </div>
+      </div>
+    `;
 
     grid.appendChild(card);
   });
 
   return grid;
 }
-
   /* =========================
      ADMIN DASHBOARD
   ========================= */
