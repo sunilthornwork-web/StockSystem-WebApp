@@ -661,6 +661,9 @@ if (savedOrders) {
   state.token = null;
   state.role = 'viewer';
   state.username = null;
+    
+  state.error = null;        // ✅ เคลียร์ error ค้าง
+  state.loading = false;    // ✅ กัน overlay ค้าง
 
   sessionExpiredHandled = false;  
   renderUI();
@@ -1717,8 +1720,9 @@ root.appendChild(header);
 
 
     if (state.loading) return root.appendChild(renderLoading());
-    if (state.error) return root.appendChild(renderError());
-
+    if (state.error && state.mode !== 'viewer') {
+  return root.appendChild(renderError());
+}
     if (state.products.length === 0) {
       await loadProducts();
       return;
