@@ -2965,6 +2965,14 @@ body[data-theme="dark"] .admin b {
   color: var(--text-main);
 }
 
+  /* ===== INLINE COLOR OVERRIDE (FUTURE-PROOF) ===== */
+body[data-theme="dark"] [style*="color:#94a3b8"] {
+  color: var(--text-muted) !important;
+}
+
+body[data-theme="dark"] [style*="color:#6b2239"] {
+  color: var(--text-main) !important;
+}
 </style>
 
     
