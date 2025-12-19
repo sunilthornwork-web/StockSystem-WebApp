@@ -352,6 +352,29 @@ button:hover,
   transform: scale(0.9);
   opacity: 0.85;
 }
+
+.header {
+  will-change: padding, transform;
+}
+
+
+  /* =========================
+   EMPTY STATE — UX POLISH
+========================= */
+.empty-state {
+  animation: fadeUp .35s ease;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}  
   
 </style>
     
@@ -1550,11 +1573,14 @@ function onSearch(value) {
 }
 
 function renderProductGridOnly() {
-  const oldGrid = document.querySelector('.grid');
-  if (!oldGrid) return;
+  const container =
+    document.querySelector('.grid') ||
+    document.querySelector('.card'); // รองรับ empty state
 
-  const newGrid = renderProductGrid();
-  oldGrid.replaceWith(newGrid);
+  if (!container) return;
+
+  const newView = renderProductGrid();
+  container.replaceWith(newView);
 }
 </script>
     
@@ -1991,6 +2017,44 @@ function getCategoryClass(category = '') {
   return 'code-other';
 }
   function renderProductGrid() {
+  // =========================
+  // STEP 2.5 — EMPTY / SEARCH UX
+  // =========================
+
+  // ❌ ไม่มีสินค้าในระบบเลย
+  if (state.products.length === 0) {
+    const div = document.createElement('div');
+    div.className = 'card empty-state';
+    div.style.textAlign = 'center';
+    div.innerHTML = `
+      <div style="font-size:2rem">🛍️</div>
+      <b>ยังไม่มีสินค้าในระบบ</b>
+      <p style="margin-top:6px">
+        เริ่มต้นเพิ่มสินค้าเพื่อใช้งานได้ทันที
+      </p>
+    `;
+    return div;
+  }
+
+  // 🔍 ค้นหา / กรองแล้วไม่เจอ
+  if (state.filteredProducts.length === 0) {
+    const div = document.createElement('div');
+    div.className = 'card empty-state';
+    div.style.textAlign = 'center';
+    div.innerHTML = `
+      <div style="font-size:2rem">🔍</div>
+      <b>ไม่พบสินค้าที่ค้นหา</b>
+      <p style="margin-top:6px">
+        ลองเปลี่ยนคำค้น หรือเลือกหมวดอื่น
+      </p>
+    `;
+    return div;
+  }
+
+
+  // =========================
+  // NORMAL GRID (เหมือนเดิม)
+  // =========================
   const grid = document.createElement('div');
   grid.className = 'grid';
 
@@ -1999,7 +2063,6 @@ function getCategoryClass(category = '') {
     card.className = 'product-card';
     card.onclick = () => openProductDetail(p);
 
-    // ✅ คำนวณ class สีหมวด
     const cls = getCategoryClass(p.category);
 
     card.innerHTML = `
@@ -2020,15 +2083,14 @@ function getCategoryClass(category = '') {
       <div class="product-price">฿${p.price}</div>
 
       <div class="product-meta">
-        <div class="meta-pill meta-stock">
+        <div class="meta-pill">
           📦 คงเหลือ ${p.stock}
         </div>
-        <div class="meta-pill meta-status">
+        <div class="meta-pill">
           🚚 ${p.status || '-'}
         </div>
       </div>
 
-      <!-- 🧾 ปุ่มสร้างใบสั่งซื้อ (ทุกคนเห็น) -->
       <div
         class="order-fab"
         onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
@@ -2041,6 +2103,7 @@ function getCategoryClass(category = '') {
 
   return grid;
 }
+
 
   /* =========================
      ADMIN DASHBOARD
@@ -2508,12 +2571,11 @@ async function loadLogs() {
 let lastScrollY = 0;
 
 window.addEventListener('scroll', () => {
-  const header = document.querySelector('.header');
+  const header = document.querySelector('#app .header');
   if (!header) return;
 
   const currentY = window.scrollY;
 
-  // เลื่อนลงเกิน 24px → compact
   if (currentY > lastScrollY && currentY > 24) {
     header.classList.add('header--compact');
   } else {
@@ -2521,7 +2583,7 @@ window.addEventListener('scroll', () => {
   }
 
   lastScrollY = currentY;
-}, { passive: true }); 
+}, { passive: true });
   
 </script>
 <!-- ========================= -->
