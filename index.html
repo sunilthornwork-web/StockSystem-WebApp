@@ -776,6 +776,35 @@ button:hover,
 }      
 </style>
 
+<!-- =========================
+   STEP 2.10 — REMOVE BLACK IMAGE BG
+   (FINAL OVERRIDE)
+========================= -->
+<style>
+/* ===== PRODUCT IMAGE (CARD) ===== */
+.product-img {
+  background-color: rgba(255,255,255,0.95) !important;
+}
+
+/* ===== MODAL IMAGE (ALL CASES) ===== */
+.modal-img,
+.modal-card img {
+  background-color: rgba(255,255,255,0.95) !important;
+}
+
+/* ===== ORDER SLIP / DETAIL IMG INLINE FIX ===== */
+.modal-card img[style*="background"] {
+  background-color: rgba(255,255,255,0.95) !important;
+}
+
+/* ===== OPTIONAL: SOFT SHADOW INSTEAD ===== */
+.product-img,
+.modal-img,
+.modal-card img {
+  box-shadow:
+    0 10px 28px rgba(0,0,0,0.15);
+}
+</style>
 
 
   <!-- ========================= -->
