@@ -1391,9 +1391,17 @@ function openProductDetail(p) {
       ✕ ปิด
     </div>
 
-    <div class="modal-img"
-      style="background-image:url('${p.image || ''}')">
-    </div>
+    <img
+  src="${p.image || ''}"
+  style="
+    width:100%;
+    aspect-ratio:1/1;
+    object-fit:contain;
+    border-radius:14px;
+    background:#020617;
+    margin-bottom:12px;
+  "
+/>
 
     <h3 style="margin:4px 0">${p.name}</h3>
 
