@@ -407,77 +407,7 @@ button:hover,
   padding: 0 !important;
 }  
 
-  /* ===== BUTTON / BADGE ===== */
-body[data-theme="dark"] button,
-body[data-theme="dark"] .badge {
-  background: linear-gradient(
-    160deg,
-    rgba(255,255,255,0.12),
-    rgba(255,255,255,0.04)
-  );
-  color: var(--text-main);
-  border-color: rgba(255,255,255,0.18);
-  box-shadow: var(--glow-soft);
-}
-
-/* ===== BRAND TITLE ===== */
-body[data-theme="dark"] .brand-title {
-  background: linear-gradient(
-    90deg,
-    rgba(255,255,255,0.14),
-    rgba(255,255,255,0.05)
-  );
-  color: var(--text-main);
-  border-color: rgba(255,255,255,0.22);
-}
-
-/* ===== CARD / MODAL / SIDEBAR ===== */
-body[data-theme="dark"] .card,
-body[data-theme="dark"] .modal-card,
-body[data-theme="dark"] .sidebar {
-  background: linear-gradient(
-    180deg,
-    rgba(30,30,50,0.65),
-    rgba(20,20,40,0.45)
-  );
-  border-color: rgba(255,255,255,0.12);
-}
-
-/* ===== PRODUCT PRICE ===== */
-body[data-theme="dark"] .product-price {
-  color: var(--text-main);
-  text-shadow: none;
-}
-
-/* ===== META / SMALL TEXT ===== */
-body[data-theme="dark"] .meta-pill,
-body[data-theme="dark"] .product-code,
-body[data-theme="dark"] .product-category,
-body[data-theme="dark"] p {
-  color: var(--text-muted);
-}
-
-/* ===== SIDEBAR BUTTON FIX ===== */
-body[data-theme="dark"] .sidebar button {
-  background: linear-gradient(
-    160deg,
-    rgba(255,255,255,0.18),
-    rgba(255,255,255,0.06)
-  );
-  color: var(--text-main);
-}
-
-/* ===== HAMBURGER ===== */
-body[data-theme="dark"] .hamburger {
-  background: linear-gradient(
-    160deg,
-    rgba(255,255,255,0.18),
-    rgba(255,255,255,0.05)
-  );
-  color: var(--text-main);
-}
-</style>
-
+ 
     <style>
 /* =========================
    STEP 2.8 — MOBILE GRID FIX
@@ -2890,25 +2820,61 @@ window.addEventListener('scroll', () => {
     🚪 Logout
   </button>
 </div>
-<!-- =========================
-   DARK MODE — FINAL READABILITY FIX
-   (TEXT / INPUT / BADGE / TOAST)
+
+    <!-- =========================
+   DARK MODE — SINGLE SOURCE (FINAL)
+   readable / clean / future-proof
 ========================= -->
 <style>
-
-/* ===== GLOBAL TEXT ===== */
+/* ===== BASE ===== */
 body[data-theme="dark"] {
+  background: var(--bg-main);
   color: var(--text-main);
 }
 
-/* ทุก p / small / label */
-body[data-theme="dark"] p,
-body[data-theme="dark"] small,
-body[data-theme="dark"] label {
-  color: var(--text-muted);
+/* ===== TEXT ===== */
+body[data-theme="dark"] h1,
+body[data-theme="dark"] h2,
+body[data-theme="dark"] h3,
+body[data-theme="dark"] b {
+  color: var(--text-main);
 }
 
-/* ===== INPUT / SELECT ===== */
+body[data-theme="dark"] p,
+body[data-theme="dark"] small,
+body[data-theme="dark"] label,
+body[data-theme="dark"] .meta-pill,
+body[data-theme="dark"] .product-code,
+body[data-theme="dark"] .product-category {
+  color: var(--text-muted) !important;
+}
+
+/* ===== CARD / MODAL / SIDEBAR ===== */
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .modal-card,
+body[data-theme="dark"] .sidebar {
+  background: linear-gradient(
+    180deg,
+    rgba(30,30,50,0.65),
+    rgba(20,20,40,0.45)
+  );
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* ===== BUTTON / BADGE / HAMBURGER ===== */
+body[data-theme="dark"] button,
+body[data-theme="dark"] .badge,
+body[data-theme="dark"] .hamburger {
+  background: linear-gradient(
+    160deg,
+    rgba(255,255,255,0.18),
+    rgba(255,255,255,0.05)
+  );
+  color: var(--text-main);
+  border-color: rgba(255,255,255,0.18);
+}
+
+/* ===== INPUT ===== */
 body[data-theme="dark"] input,
 body[data-theme="dark"] select,
 body[data-theme="dark"] textarea {
@@ -2921,19 +2887,7 @@ body[data-theme="dark"] input::placeholder {
   color: rgba(248,250,252,0.45);
 }
 
-/* ===== EMPTY STATE ===== */
-body[data-theme="dark"] .empty-state b {
-  color: var(--text-main);
-}
-
-/* ===== META TEXT (override hard-code) ===== */
-body[data-theme="dark"] .meta-pill,
-body[data-theme="dark"] .product-code,
-body[data-theme="dark"] .product-category {
-  color: var(--text-muted) !important;
-}
-
-/* ===== CATEGORY BADGE (CALM) ===== */
+/* ===== CATEGORY BADGE ===== */
 body[data-theme="dark"] .code-bag,
 body[data-theme="dark"] .code-jewelry,
 body[data-theme="dark"] .code-utility,
@@ -2944,37 +2898,79 @@ body[data-theme="dark"] .code-other {
   box-shadow: none;
 }
 
-/* ===== TOAST ===== */
-body[data-theme="dark"] [style*="linear-gradient(90deg,#fff5f9"] {
+/* ===== ORDER FAB ===== */
+body[data-theme="dark"] .order-fab {
   background: linear-gradient(
-    160deg,
-    rgba(255,255,255,0.18),
-    rgba(255,255,255,0.06)
-  ) !important;
-  color: var(--text-main) !important;
+    135deg,
+    rgba(255,255,255,0.2),
+    rgba(167,139,250,0.35)
+  );
+  color: var(--text-main);
+  box-shadow: 0 0 22px rgba(167,139,250,.65);
 }
 
-/* ===== MODAL TEXT ===== */
-body[data-theme="dark"] .modal-card h3,
-body[data-theme="dark"] .modal-card b {
+body[data-theme="dark"] .order-fab::after {
+  background: rgba(255,255,255,0.14);
   color: var(--text-main);
 }
 
-/* ===== ADMIN TEXT FIX ===== */
-body[data-theme="dark"] .admin b {
-  color: var(--text-main);
+/* ===== SPINNER ===== */
+body[data-theme="dark"] .spinner {
+  border-color: rgba(255,255,255,0.25);
+  border-top-color: var(--primary-gold);
 }
 
-  /* ===== INLINE COLOR OVERRIDE (FUTURE-PROOF) ===== */
-body[data-theme="dark"] [style*="color:#94a3b8"] {
+/* ===== OVERLAY ===== */
+body[data-theme="dark"] .modal-overlay {
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+}
+
+/* ===== INLINE COLOR CLEANUP ===== */
+body[data-theme="dark"] [style*="color:#94a3b8"],
+body[data-theme="dark"] [style*="color:#6b2239"],
+body[data-theme="dark"] [style*="color:#7a2e44"],
+body[data-theme="dark"] [style*="color:#334155"] {
   color: var(--text-muted) !important;
-}
-
-body[data-theme="dark"] [style*="color:#6b2239"] {
-  color: var(--text-main) !important;
 }
 </style>
 
-    
+    <!-- =========================
+   DARK MODE — FINAL POLISH
+   text contrast / toast / edge case
+========================= -->
+<style>
+
+/* ===== TOAST FIX ===== */
+body[data-theme="dark"] div[style*="linear-gradient(90deg,#fff5f9"] {
+  background: linear-gradient(
+    160deg,
+    rgba(255,255,255,0.18),
+    rgba(167,139,250,0.35)
+  ) !important;
+  color: var(--text-main) !important;
+  box-shadow: 0 0 26px rgba(167,139,250,.75) !important;
+}
+
+/* ===== EMPTY / HINT TEXT ===== */
+body[data-theme="dark"] .empty-state p {
+  color: var(--text-muted);
+}
+
+/* ===== MODAL SMALL TEXT ===== */
+body[data-theme="dark"] .modal-card p {
+  color: var(--text-muted);
+}
+
+/* ===== FORCE INLINE TEXT (EXTRA SAFE) ===== */
+body[data-theme="dark"] [style*="color:#94a3b8"],
+body[data-theme="dark"] [style*="color:#6b2239"],
+body[data-theme="dark"] [style*="color:#7a2e44"] {
+  color: var(--text-muted) !important;
+}
+
+</style>
+
+       
 </body>
 </html>
