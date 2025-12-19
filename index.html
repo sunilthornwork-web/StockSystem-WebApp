@@ -1177,10 +1177,10 @@ async function adjustStock(code, diff) {
     const res = await apiUpdateStock(code, diff);
     if (!res) throw new Error();
 
-    // ✅ อัปเดต state ทันที (ไม่ renderUI)
     const p = state.products.find(p => p.code === code);
     if (p) {
       p.stock += diff;
+      p.updatedAt = Date.now(); // ✅ เพิ่มบรรทัดนี้
     }
 
     showToast('📦 อัปเดตสต๊อกแล้ว');
@@ -1188,8 +1188,6 @@ async function adjustStock(code, diff) {
     showToast('❌ อัปเดตไม่สำเร็จ', 'error');
   } finally {
     state.submitting = false;
-
-    // ✅ ค่อย renderUI ทีเดียว หลังจบทุกอย่าง
     renderUI();
   }
 }
