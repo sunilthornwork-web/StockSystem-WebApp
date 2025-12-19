@@ -1,23 +1,20 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StockBuilder</title>
-  <link rel="icon" href="data:,">  
-</head>
-  <body>
- <!-- ========================= -->
-<!-- UI STYLE (STEP 2) -->
-<!-- Rose Gold + Glass Luxury -->
-<!-- ========================= -->
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
+  <link rel="icon" href="data:,">
 
-/* =====================================================
-   STEP 2 — UI STYLE FINAL (MERGED)
-   Rose Gold • Glass • Mobile-first • Production Safe
-===================================================== */
+  <!-- ========================= -->
+  <!-- UI STYLE (STEP 2 FINAL) -->
+  <!-- Rose Gold + Glass Luxury -->
+  <!-- ========================= -->
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
 
 /* =========================
    DESIGN TOKENS
@@ -25,10 +22,8 @@
 :root {
   --bg-main: radial-gradient(circle at top,#f7d9e3,#f1c6d3 35%,#e8b4c2 60%,#d8a1b1);
   --glass: rgba(255,255,255,0.38);
-  --glass-strong: rgba(255,255,255,0.55);
   --glass-border: rgba(255,255,255,0.65);
 
-  --rose-soft: #fde7ef;
   --rose-gold: #f3b6c8;
   --rose-deep: #b76e79;
 
@@ -37,8 +32,6 @@
 
   --glow-soft: 0 0 20px rgba(243,182,200,0.45);
   --glow: 0 0 36px rgba(243,182,200,0.75);
-
-  --primary-gold: #f3b6c8;
 }
 
 /* =========================
@@ -68,7 +61,6 @@ h1 {
   margin: 0 0 14px;
   font-weight: 800;
 }
-
 p {
   margin: 0;
   font-size: .95rem;
@@ -76,7 +68,7 @@ p {
 }
 
 /* =========================
-   CARD / GLASS
+   CARD
 ========================= */
 .card {
   background: linear-gradient(180deg,rgba(255,255,255,0.65),rgba(255,255,255,0.28));
@@ -89,7 +81,7 @@ p {
 }
 
 /* =========================
-   HEADER + SMART SCROLL
+   HEADER
 ========================= */
 .header {
   display:flex;
@@ -99,13 +91,6 @@ p {
   position:sticky;
   top:0;
   z-index:100;
-  transition:padding .25s ease,transform .25s ease,backdrop-filter .25s ease,background .25s ease;
-}
-
-.header.header--compact {
-  padding:6px 0;
-  backdrop-filter: blur(14px);
-  background: linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.55));
 }
 
 .brand-title {
@@ -118,7 +103,7 @@ p {
 }
 
 /* =========================
-   BUTTON / BADGE
+   BUTTON
 ========================= */
 button,.badge {
   border-radius:999px;
@@ -128,9 +113,7 @@ button,.badge {
   font-weight:700;
   cursor:pointer;
   box-shadow:var(--glow-soft);
-  transition:.25s;
 }
-button:hover { transform:translateY(-1px) scale(1.03); }
 
 /* =========================
    GRID
@@ -143,20 +126,20 @@ button:hover { transform:translateY(-1px) scale(1.03); }
 @media(min-width:521px){ .grid{grid-template-columns:repeat(2,1fr);} }
 
 /* =========================
-   PRODUCT CARD
+   PRODUCT CARD (FINAL – ONE ONLY)
 ========================= */
 .product-card {
   position:relative;
   display:flex;
   flex-direction:column;
   gap:10px;
-  padding:20px 20px 32px;
+  padding:22px 22px 38px;
   border-radius:22px;
   background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,255,255,.4));
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 22px 48px rgba(183,110,121,.28);
-  transition:.35s;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.55),
+    0 22px 48px rgba(183,110,121,.28);
 }
-.product-card:hover { transform:translateY(-3px); }
 
 .product-img {
   width:100%;
@@ -178,117 +161,27 @@ button:hover { transform:translateY(-1px) scale(1.03); }
 }
 
 /* =========================
-   ORDER FAB
+   INPUT
 ========================= */
-.order-fab {
-  position:absolute;
-  bottom:14px;
-  right:14px;
-  width:36px;
-  height:36px;
+input, select {
+  font-family:inherit;
+  padding:10px;
   border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(135deg,#fff,var(--rose-gold));
-  box-shadow:0 0 20px rgba(243,182,200,.6);
-  cursor:pointer;
+  border:none;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
 }
+input:focus, select:focus {
+  outline:none;
+  box-shadow:0 0 0 2px rgba(243,182,200,.6);
+}
+  </style>
+</head>
 
-/* =========================
-   MODAL
-========================= */
-.modal-overlay {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  backdrop-filter:blur(6px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
-.modal-card {
-  background:var(--glass);
-  border-radius:20px;
-  width:92%;
-  max-width:420px;
-  padding:16px;
-  box-shadow:var(--glow);
-}
-.modal-img {
-  width:100%;
-  aspect-ratio:1/1;
-  background:center/contain no-repeat #fff;
-  border-radius:14px;
-  margin-bottom:12px;
-}
-
-/* =========================
-   SIDEBAR / HAMBURGER
-========================= */
-.sidebar {
-  position:fixed;
-  right:-280px;
-  width:260px;
-  height:100vh;
-  background:linear-gradient(180deg,#fff0f6,#f3b6c8);
-  padding:20px;
-  transition:.3s;
-}
-.sidebar.show { right:0; }
-
-.hamburger {
-  font-size:1.6rem;
-  padding:10px 14px;
-  border-radius:14px;
-  background:linear-gradient(160deg,rgba(255,255,255,.7),rgba(255,255,255,.35));
-  cursor:pointer;
-}
-
-.header-actions {
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-</style>
-
-
+<body>  
   <!-- ========================= -->
-  <!-- APP ROOT -->
+  <!-- APP ROOT (ต้องอยู่ใน BODY เท่านั้น) -->
   <!-- ========================= -->
   <div id="app"></div>
-
-<script>
-/* =========================
-   GLOBAL STATE (PRODUCTION)
-========================= */
-
-let sessionTimer = null;
-let pingTimer = null;
-let sessionExpiredHandled = false;
-
-const state = {
-  mode: 'viewer',
-  token: null,
-  role: 'viewer',
-  username: null,
-
-  products: [],
-  filteredProducts: [],
-  pendingOrders: [],
-
-  search: '',
-  category: 'all',
-
-  loading: false,
-  error: null,
-
-  submittingForm: false,
-  submittingStock: false,
-  submittingAuth: false
-};
-</script>
 
 <script>
 /* =========================
@@ -2132,25 +2025,33 @@ async function loadLogs() {
 }
 
 
- /* =========================
-   HEADER SMART SCROLL LOGIC
-========================= */
 let lastScrollY = 0;
+let ticking = false;
 
 window.addEventListener('scroll', () => {
-  const header = document.querySelector('#app .header');
-  if (!header) return;
+  if (ticking) return;
+  ticking = true;
 
-  const currentY = window.scrollY;
+  requestAnimationFrame(() => {
+    const header = document.querySelector('#app .header');
+    if (!header) {
+      ticking = false;
+      return;
+    }
 
-  if (currentY > lastScrollY && currentY > 24) {
-    header.classList.add('header--compact');
-  } else {
-    header.classList.remove('header--compact');
-  }
+    const currentY = window.scrollY;
 
-  lastScrollY = currentY;
+    if (currentY > lastScrollY && currentY > 32) {
+      header.classList.add('header--compact');
+    } else if (currentY < lastScrollY - 8) {
+      header.classList.remove('header--compact');
+    }
+
+    lastScrollY = currentY;
+    ticking = false;
+  });
 }, { passive: true });
+
   
 </script>
 <!-- ========================= -->
