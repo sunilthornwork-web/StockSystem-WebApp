@@ -857,14 +857,16 @@ function showToast(text, type = 'success') {
     bottom:24px;
     left:50%;
     transform:translateX(-50%);
-    padding:14px 22px;
+    padding:14px 24px;
     border-radius:999px;
-    background:${type === 'success'
-      ? 'linear-gradient(90deg,#fde68a,#facc15)'
-      : '#ef4444'};
-    color:#4a044e;
-    font-weight:700;
-    box-shadow:0 0 30px rgba(250,204,21,.5);
+    background:${
+      type === 'success'
+        ? 'linear-gradient(90deg,#fff5f9,#f3b6c8)'
+        : 'linear-gradient(90deg,#fda4af,#fb7185)'
+    };
+    color:#6b2239;
+    font-weight:800;
+    box-shadow:0 0 32px rgba(243,182,200,.9);
     z-index:9999;
   `;
 
@@ -1048,8 +1050,9 @@ async function generateOrderSlipImage(order) {
 
   /* ===== BG ===== */
   const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  grad.addColorStop(0, '#7c3aed');
-  grad.addColorStop(1, '#3b0764');
+  grad.addColorStop(0, '#fde7ef');
+  grad.addColorStop(1, '#b76e79');
+
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1415,19 +1418,34 @@ function drawDashboardChart(history) {
   const xStep = (canvas.width - padding * 2) / (history.length - 1 || 1);
   const yScale = (canvas.height - padding * 2) / (max - min || 1);
 
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
+  /* ===== ROSE GOLD LINE ===== */
+  ctx.strokeStyle = '#b76e79';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#f3b6c8';
+  ctx.shadowBlur = 10;
 
+  ctx.beginPath();
   history.forEach((p, i) => {
     const x = padding + i * xStep;
     const y = canvas.height - padding - (p.totalStock - min) * yScale;
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   });
-
   ctx.stroke();
-}  
+
+  /* ===== ROSE GOLD DOTS ===== */
+  ctx.fillStyle = '#b76e79';
+  ctx.shadowBlur = 0;
+
+  history.forEach((p, i) => {
+    const x = padding + i * xStep;
+    const y = canvas.height - padding - (p.totalStock - min) * yScale;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
   /* =========================
      ADMIN LOGIN
   ========================= */
@@ -2115,41 +2133,46 @@ async function loadLogs() {
 }
 
   function drawStockChart(data) {
-    const canvas = document.getElementById('historyChart');
-    const ctx = canvas.getContext('2d');
+  const canvas = document.getElementById('historyChart');
+  const ctx = canvas.getContext('2d');
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const padding = 30;
-    const maxStock = Math.max(...data.map(d => d.stock));
-    const minStock = Math.min(...data.map(d => d.stock));
+  const padding = 30;
+  const maxStock = Math.max(...data.map(d => d.stock));
+  const minStock = Math.min(...data.map(d => d.stock));
 
-    const xStep = (canvas.width - padding * 2) / (data.length - 1 || 1);
-    const yScale = (canvas.height - padding * 2) / (maxStock - minStock || 1);
+  const xStep = (canvas.width - padding * 2) / (data.length - 1 || 1);
+  const yScale = (canvas.height - padding * 2) / (maxStock - minStock || 1);
 
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 2;
+  /* ===== ROSE GOLD LINE ===== */
+  ctx.strokeStyle = '#b76e79';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#f3b6c8';
+  ctx.shadowBlur = 10;
+
+  ctx.beginPath();
+  data.forEach((point, i) => {
+    const x = padding + i * xStep;
+    const y = canvas.height - padding - (point.stock - minStock) * yScale;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  /* ===== ROSE GOLD DOTS ===== */
+  ctx.fillStyle = '#b76e79';
+  ctx.shadowBlur = 0;
+
+  data.forEach((point, i) => {
+    const x = padding + i * xStep;
+    const y = canvas.height - padding - (point.stock - minStock) * yScale;
     ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
 
-    data.forEach((point, i) => {
-      const x = padding + i * xStep;
-      const y = canvas.height - padding - (point.stock - minStock) * yScale;
-
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-
-    ctx.stroke();
-
-    ctx.fillStyle = '#38bdf8';
-    data.forEach((point, i) => {
-      const x = padding + i * xStep;
-      const y = canvas.height - padding - (point.stock - minStock) * yScale;
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
-  }
   
 </script>
 <!-- ========================= -->
