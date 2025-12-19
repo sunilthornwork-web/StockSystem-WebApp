@@ -154,149 +154,6 @@ button:hover,
   box-shadow: 0 0 40px rgba(243,182,200,.85);
 }
 
-/* =========================
-   GRID / PRODUCT CARD
-========================= */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-}
-
-
-.product-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--glow);
-}
-
-.product-img {
-  width: 100%;
-  aspect-ratio: 1/1;
-  border-radius: 14px;
-  background-color: rgba(255,255,255,.45);
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  margin-bottom: 8px;
-}
-
-.product-name {
-  font-size: 1rem;
-  font-weight: 800;
-  margin: 6px 0 4px;
-}
-
-.product-price {
-  font-size: 1.05rem;
-  font-weight: 900;
-  color: var(--rose-deep);
-  text-shadow: 0 0 12px rgba(243,182,200,.7);
-}
-
-/* =========================
-   ORDER FAB
-========================= */
-.order-fab {
-  position: absolute;
-  bottom: 52px;
-  right: 16px;
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  background: linear-gradient(135deg,#fff5f9,#f3b6c8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  cursor: pointer;
-  box-shadow: 0 0 28px rgba(243,182,200,.85);
-  transition: all .25s ease;
-}
-
-.order-fab:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 0 40px rgba(243,182,200,1);
-}
-
-/* =========================
-   STEP 2.3 — ORDER FAB PREMIUM
-========================= */
-
-/* ===== BASE ENHANCE ===== */
-/* =========================
-   STEP 2.6 — ORDER FAB (SMALLER)
-========================= */
-.order-fab {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-
-  bottom: 48px;
-  right: 14px;
-
-  font-size: 18px;
-
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.7),
-    0 0 16px rgba(243,182,200,0.55);
-}
-
-.order-fab:hover {
-  transform: translateY(-1px) scale(1.03);
-  box-shadow: 0 0 22px rgba(243,182,200,0.75);
-}
-
-/* ===== LABEL HINT ===== */
-.order-fab::after {
-  content: 'ใบสั่งซื้อ';
-  position: absolute;
-
-  right: 54px;
-  top: 50%;
-  transform: translateY(-50%) translateX(6px);
-
-  padding: 6px 12px;
-  border-radius: 999px;
-
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: .3px;
-
-  color: #7a2e44;
-  background: linear-gradient(
-    90deg,
-    #fff5f9,
-    #f3b6c8
-  );
-
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-
-  box-shadow: 0 0 20px rgba(243,182,200,.75);
-
-  transition:
-    opacity .25s ease,
-    transform .25s ease;
-}
-
-/* แสดง label เมื่อ hover / tap */
-.order-fab:hover::after {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
-}
-
-/* ===== SOFT ATTENTION (FIRST LOAD) ===== */
-@keyframes fabPulse {
-  0%   { box-shadow: 0 0 0 rgba(243,182,200,0); }
-  50%  { box-shadow: 0 0 32px rgba(243,182,200,.9); }
-  100% { box-shadow: 0 0 0 rgba(243,182,200,0); }
-}
-
-/* pulse แค่เบา ๆ */
-.order-fab {
-  animation: fabPulse 1.8s ease-out 1;
-}  
 
 /* =========================
    ADMIN ACCENT
@@ -394,6 +251,17 @@ button:hover,
 }  
 </style>
 
+
+    <style>
+/* =========================
+   GRID BASE (REQUIRED)
+========================= */
+.grid {
+  display: grid;
+  gap: 18px;
+}
+</style>
+
     <style>
 /* =========================
    STEP 2.8 — MOBILE GRID FIX
@@ -418,50 +286,33 @@ button:hover,
       
 </style>
 
-    <!-- =========================
-   STEP 2.9 — PRODUCT CARD LUXURY
-   Glass / Depth / Calm Motion
-   (OVERRIDE ONLY)
-========================= -->
 <style>
-
 /* =========================
-   CARD — DEPTH & LAYER
+   STEP 2.9 — PRODUCT CARD LUXURY (FINAL)
+   Clean • Breathable • Premium
 ========================= */
+
+/* ===== PRODUCT CARD ===== */
 .product-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;                 /* ⬅️ คลายความอัด */
+
+  padding: 20px;
+  padding-bottom: 32px;      /* ⭐ เผื่อพื้นที่ FAB */
+  border-radius: 22px;
+
   background: linear-gradient(
     180deg,
-    rgba(255,255,255,0.75),
-    rgba(255,255,255,0.35)
+    rgba(255,255,255,0.8),
+    rgba(255,255,255,0.4)
   );
+
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.55),
-    0 18px 40px rgba(183,110,121,0.25);
-}
+    0 22px 48px rgba(183,110,121,0.28);
 
-/* =========================
-   TYPO — CALM HIERARCHY
-========================= */
-.product-name {
-  font-weight: 700;
-  letter-spacing: .15px;
-}
-
-.product-price {
-  letter-spacing: .3px;
-}
-
-/* =========================
-   META — QUIET
-========================= */
-.product-meta {
-  opacity: 0.9;
-}
-
-/* =========================
-   HOVER — PREMIUM MOTION
-========================= */
-.product-card {
   transition:
     transform .35s ease,
     box-shadow .35s ease;
@@ -471,60 +322,105 @@ button:hover,
   transform: translateY(-3px);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.65),
-    0 28px 60px rgba(183,110,121,0.35);
+    0 32px 68px rgba(183,110,121,0.38);
 }
 
-/* =========================
-   ORDER FAB — SUBTLE
-========================= */
+/* ===== IMAGE ===== */
+.product-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  background-color: #ffffff;      /* ⬅️ แก้หลอกตา */
+  border-radius: 18px;
+
+  padding: 20px;                  /* ⬅️ รูปไม่ติด */
+  margin-bottom: 6px;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+/* ===== NAME ===== */
+.product-name {
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* ===== PRICE (HERO) ===== */
+.product-price {
+  font-weight: 900;
+  font-size: 1.15rem;
+  margin: 4px 0 8px;
+  color: var(--rose-deep);
+}
+
+/* ===== META ===== */
+.product-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+
+  font-size: 0.75rem;
+  opacity: 0.85;
+
+  padding-top: 10px;
+  border-top: 1px dashed rgba(183,110,121,0.25);
+}
+
+/* ===== ORDER FAB ===== */
 .order-fab {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   background: linear-gradient(
     135deg,
-    rgba(255,255,255,0.9),
+    rgba(255,255,255,0.95),
     var(--rose-gold)
   );
-  opacity: 0.92;
+
+  font-size: 15px;
+  cursor: pointer;
+
+  opacity: 0.85;
+  box-shadow: 0 0 20px rgba(243,182,200,0.6);
+
+  transition: all .25s ease;
 }
 
 .product-card:hover .order-fab {
   opacity: 1;
-  box-shadow:
-    0 0 28px rgba(243,182,200,0.85);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 0 34px rgba(243,182,200,0.9);
 }
 
+/* ===== MOBILE ===== */
+@media (max-width: 520px) {
+  .product-card {
+    padding: 22px;
+    padding-bottom: 36px;
+  }
+
+  .order-fab {
+    bottom: 16px;
+    right: 16px;
+  }
+}
 </style>
 
-   <!-- =========================
-   STEP 2.10.1 — IMAGE FRAME RESTORE
-   คืนกรอบขาวโค้ง (แบบแรก)
-========================= -->
-<style>
-/* กรอบรูปหลัก */
-.product-img {
-  background-color: #ffffff !important; /* กรอบขาว */
-  padding: 12px;                        /* ⭐ หัวใจของกรอบ */
-  box-shadow: none !important;          /* ไม่ให้ลอย */
-}
-
-/* คุมรูปด้านใน */
-.product-img {
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-/* ปิด vignette หม่น */
-.product-img::after {
-  display: none !important;
-}
-
-  .product-img {
-  box-shadow:
-    inset 0 0 0 1px rgba(0,0,0,0.03);
-}
-
-</style>
- 
 
     
     <style>
@@ -718,71 +614,6 @@ button:hover,
   gap: 10px;
 }
 
-/* =========================
-   UI POLISH — PREMIUM HIERARCHY
-   (STEP 2.2)
-========================= */
-
-/* ===== PRODUCT NAME ===== */
-.product-name {
-  font-size: 1.05rem;
-  font-weight: 800;
-  line-height: 1.4;
-  margin-bottom: 6px;
-  letter-spacing: .2px;
-}
-
-/* ===== PRICE (HERO) ===== */
-.product-price {
-  font-size: 1.2rem;          /* ⬆️ เด่นขึ้น */
-  font-weight: 900;
-  margin: 8px 0 6px;
-  color: var(--rose-deep);
-
-  text-shadow:
-    0 0 14px rgba(243,182,200,.9),
-    0 0 32px rgba(243,182,200,.6);
-}
-
-/* ===== PRODUCT CODE (DE-EMPHASIZE) ===== */
-.product-code {
-  font-size: 0.65rem;
-  font-weight: 600;
-  opacity: 0.75;
-  margin: 2px 0 6px;
-}
-
-/* ===== CATEGORY BADGE (SOFTER) ===== */
-.product-category {
-  font-size: 0.65rem;
-  font-weight: 700;
-  opacity: 0.85;
-  margin-bottom: 6px;
-
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.55),
-    0 0 10px rgba(243,182,200,0.25);
-}
-
-/* ===== META (STOCK + STATUS) ===== */
-.product-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.meta-pill {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #7a2e44;
-  opacity: 0.9;
-}
-
-/* ===== CARD BREATHING SPACE ===== */
-.product-card {
-  padding-bottom: 20px; /* ให้การ์ดดูโปร่งขึ้น */
-}      
 </style>
 
   <!-- ========================= -->
