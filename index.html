@@ -412,34 +412,34 @@ button:hover,
 .order-fab {
   position: absolute;
 
-  /* 👉 ย้ายจากมุมบน → มุมขวาล่าง */
-  bottom: 18px;
-  right: 18px;
+  /* ✅ ขยับขึ้น ไม่ทับสถานะ */
+  bottom: 26px;
+  right: 16px;
 
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
+  /* ✅ ลดขนาด */
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
 
   background: linear-gradient(135deg,#fff7cc,#facc15);
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 26px;
+  font-size: 22px;
   cursor: pointer;
 
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.7),
-    0 0 28px rgba(250,204,21,0.65);
+    0 0 24px rgba(250,204,21,0.6);
 
   transition: all .25s ease;
 }
 
 .order-fab:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 0 40px rgba(250,204,21,0.85);
+  box-shadow: 0 0 36px rgba(250,204,21,0.85);
 }
-
 
 </style>
 
@@ -1151,11 +1151,30 @@ function createOrderSlip(p) {
     createdAt: Date.now()
   };
 
+  // ✅ บันทึกใบสั่งซื้อ
   state.pendingOrders.push(order);
   localStorage.setItem('pendingOrders', JSON.stringify(state.pendingOrders));
 
+  // ✅ ดาวน์โหลดรูปสินค้าเข้าเครื่อง
+  if (p.image) {
+    downloadImage(
+      p.image,
+      `ORDER_${p.code}_${order.createdAt}.jpg`
+    );
+  }
+
   document.querySelector('.modal-overlay')?.remove();
-  showToast('🕓 สร้างใบสั่งซื้อแล้ว รอแอดมินยืนยัน');
+  showToast('🧾 สร้างใบสั่งซื้อ + ดาวน์โหลดรูปแล้ว');
+}
+
+/* ===== HELPER: DOWNLOAD IMAGE ===== */
+function downloadImage(url, filename) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 
