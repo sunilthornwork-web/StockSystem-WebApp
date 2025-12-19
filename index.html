@@ -429,6 +429,37 @@ button:hover,
   }
 }
 
+      body[data-theme="dark"] {
+  --bg-main: radial-gradient(
+    circle at top,
+    #1e1b2e,
+    #141225 45%,
+    #0f0d1a
+  );
+
+  --glass: rgba(30,30,50,0.45);
+  --glass-strong: rgba(40,40,65,0.6);
+  --glass-border: rgba(255,255,255,0.12);
+
+  --rose-soft: #2a243f;
+  --rose-gold: #9f7aea;
+  --rose-deep: #c4b5fd;
+
+  --text-main: #f8fafc;              /* 👈 ตัวหนังสือหลัก (ชัด) */
+  --text-muted: rgba(248,250,252,.65);
+
+  --glow-soft: 0 0 18px rgba(167,139,250,.35);
+  --glow: 0 0 32px rgba(167,139,250,.65);
+
+  --primary-gold: #a78bfa;
+  --primary-admin: #818cf8;
+}
+
+/* ปรับพื้นหลัง body */
+body[data-theme="dark"] {
+  background: var(--bg-main);
+  color: var(--text-main);
+}
       
 </style>
 
@@ -1370,6 +1401,29 @@ const getVal = (id) => {
 <!-- ========================= -->
     <script>
 /* =========================
+   THEME TOGGLE (LIGHT / DARK)
+========================= */
+function setTheme(theme) {
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem('ui_theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.body.getAttribute('data-theme') || 'light';
+  setTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+/* โหลด theme ตอนเปิดหน้า */
+(function initTheme() {
+  const saved = localStorage.getItem('ui_theme');
+  if (saved) {
+    document.body.setAttribute('data-theme', saved);
+  }
+})();
+</script>
+
+    <script>
+/* =========================
    GLOBAL LOADING OVERLAY
 ========================= */
 function showGlobalLoading(text = 'กำลังดำเนินการ...') {
@@ -2179,10 +2233,12 @@ header.innerHTML = `
   <div class="brand-title">
     ⭐ ล้อพาณิชย์ ⭐
   </div>
-  <button class="badge" onclick="renderAdminLogin()">Admin</button>
+  <div class="header-actions">
+    <button class="badge" onclick="toggleTheme()">🌙</button>
+    <button class="badge" onclick="renderAdminLogin()">Admin</button>
+  </div>
 `;
 root.appendChild(header);
-
 
     if (state.loading) return root.appendChild(renderLoading());
     if (state.error && state.mode !== 'viewer') {
