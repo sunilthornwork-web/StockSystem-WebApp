@@ -410,7 +410,7 @@ button:hover,
 
 .order-fab {
   position: absolute;
-  bottom: 14px;
+  top: 14px;       /* ✅ ย้ายขึ้นด้านบน */
   right: 14px;
   width: 44px;
   height: 44px;
@@ -1044,6 +1044,90 @@ function showConfirm({ title, message, onConfirm }) {
 }
 </script>
 
+<script>
+function openOrderSlip(p) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = () => overlay.remove();
+
+  const card = document.createElement('div');
+  card.className = 'modal-card';
+  card.onclick = e => e.stopPropagation();
+
+  card.innerHTML = `
+    <h3 style="margin-bottom:12px">🧾 ใบสั่งซื้อ</h3>
+
+    <div class="modal-img"
+      style="background-image:url('${p.image || ''}')">
+    </div>
+
+    <p><b>${p.name}</b></p>
+    <p style="font-size:0.8rem;color:#94a3b8">
+      รหัสสินค้า: ${p.code}
+    </p>
+
+    <input
+      id="order-qty"
+      type="number"
+      min="1"
+      placeholder="จำนวนที่สั่ง"
+      style="
+        width:100%;
+        padding:12px;
+        margin:12px 0;
+        border-radius:12px;
+        border:none;
+      "
+    />
+
+    <button
+      class="admin-stock-btn"
+      style="width:100%"
+      onclick="createOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+      📄 สร้างใบสั่งซื้อ
+    </button>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
+
+function createOrderSlip(p) {
+  const qty = Number(document.getElementById('order-qty').value);
+  if (!qty || qty <= 0) {
+    alert('กรุณากรอกจำนวนที่สั่ง');
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 360;
+  canvas.height = 480;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.fillStyle = '#000';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('ใบสั่งซื้อ', 140, 30);
+
+  ctx.font = '14px sans-serif';
+  ctx.fillText(`สินค้า: ${p.name}`, 20, 80);
+  ctx.fillText(`รหัส: ${p.code}`, 20, 110);
+  ctx.fillText(`จำนวน: ${qty}`, 20, 140);
+  ctx.fillText(
+    `วันที่: ${new Date().toLocaleString('th-TH')}`,
+    20, 170
+  );
+
+  const link = document.createElement('a');
+  link.download = `order_${p.code}.png`;
+  link.href = canvas.toDataURL();
+  link.click();
+
+  document.querySelector('.modal-overlay')?.remove();
+}
+</script>
 
 
 <script>
@@ -1558,11 +1642,12 @@ function getCategoryClass(category = '') {
   </div>
 
   <!-- 🧾 ORDER SLIP BUTTON -->
-  <div
-    class="order-fab"
-    onclick="openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-    🧾
-  </div>
+<div
+  class="order-fab"
+  onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+  🧾
+</div>
+
 `;
 
 
