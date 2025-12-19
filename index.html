@@ -1092,44 +1092,62 @@ function openOrderSlip(p) {
   document.body.appendChild(overlay);
 }
 
-function createOrderSlip(p) {
+async function createOrderSlip(p) {
   const qty = Number(document.getElementById('order-qty').value);
   if (!qty || qty <= 0) {
-    alert('กรุณากรอกจำนวนที่สั่ง');
+    showToast('❌ กรุณากรอกจำนวนที่สั่ง', 'error');
     return;
   }
 
+  // 🔒 เช็กสต๊อกพอไหม
+  if (qty > p.stock) {
+    showToast('❌ สต๊อกไม่เพียงพอ', 'error');
+    return;
+  }
+
+  // 🔄 หักสต๊อกก่อน (ส่งออก = ติดลบ)
+  try {
+    await apiUpdateStock(p.code, -qty);
+
+    // อัปเดต state ทันที (ไม่ต้อง refresh)
+    const product = state.products.find(x => x.code === p.code);
+    if (product) {
+      product.stock -= qty;
+      product.updatedAt = Date.now();
+    }
+
+  } catch (e) {
+    showToast('❌ หักสต๊อกไม่สำเร็จ', 'error');
+    return;
+  }
+
+  // ===== สร้างใบสั่งซื้อ PNG =====
   const canvas = document.createElement('canvas');
   canvas.width = 360;
   canvas.height = 560;
   const ctx = canvas.getContext('2d');
 
-  // ===== Background (Luxury Purple) =====
   const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
   bg.addColorStop(0, '#6d28d9');
   bg.addColorStop(1, '#2e1065');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // ===== Glass Card =====
   ctx.fillStyle = 'rgba(255,255,255,0.15)';
   ctx.strokeStyle = 'rgba(255,255,255,0.35)';
   ctx.lineWidth = 1.5;
   roundRect(ctx, 20, 20, 320, 520, 20, true, true);
 
-  // ===== Title =====
   ctx.fillStyle = '#fde68a';
   ctx.font = 'bold 20px Sarabun, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('ใบสั่งซื้อ', canvas.width / 2, 55);
 
-  // ===== Load Image =====
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
     ctx.drawImage(img, 80, 80, 200, 200);
 
-    // ===== Text =====
     ctx.textAlign = 'left';
     ctx.fillStyle = '#ffffff';
     ctx.font = '16px Sarabun, sans-serif';
@@ -1145,13 +1163,14 @@ function createOrderSlip(p) {
       420
     );
 
-    // ===== Download =====
     const link = document.createElement('a');
     link.download = `order_${p.code}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
 
+    showToast('🧾 สร้างใบสั่งซื้อและหักสต๊อกแล้ว');
     document.querySelector('.modal-overlay')?.remove();
+    renderUI(); // ♻️ รีเรนเดอร์ให้จำนวนใหม่ขึ้น
   };
 
   img.src = p.image || '';
