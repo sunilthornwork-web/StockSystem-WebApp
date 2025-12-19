@@ -1660,49 +1660,49 @@ function getCategoryClass(category = '') {
     card.className = 'product-card';
     card.onclick = () => openProductDetail(p);
 
-    // ✅ คำนวณ class ตรงนี้ (นอก HTML)
+    // ✅ คำนวณ class สีหมวด
     const cls = getCategoryClass(p.category);
 
     card.innerHTML = `
-  <div class="product-img"
-    style="background-image:url('${p.image || ''}');">
-  </div>
+      <div class="product-img"
+        style="background-image:url('${p.image || ''}');">
+      </div>
 
-  <div class="product-name">${p.name}</div>
+      <div class="product-name">${p.name}</div>
 
-  <div class="product-code ${cls}">
-    🆔 ${p.code}
-  </div>
+      <div class="product-code ${cls}">
+        🆔 ${p.code}
+      </div>
 
-  <div class="product-category ${cls}">
-    🏷️ ${p.category}
-  </div>
+      <div class="product-category ${cls}">
+        🏷️ ${p.category}
+      </div>
 
-  <div class="product-price">฿${p.price}</div>
+      <div class="product-price">฿${p.price}</div>
 
-  <div class="product-meta">
-    <div class="meta-pill meta-stock">
-      📦 คงเหลือ ${p.stock}
-    </div>
-    <div class="meta-pill meta-status">
-      🚚 ${p.status || '-'}
-    </div>
-  </div>
+      <div class="product-meta">
+        <div class="meta-pill meta-stock">
+          📦 คงเหลือ ${p.stock}
+        </div>
+        <div class="meta-pill meta-status">
+          🚚 ${p.status || '-'}
+        </div>
+      </div>
 
-  ${state.role !== 'viewer' ? `
-    <div
-  class="order-fab"
-  onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-  🧾
-</div>
-  ` : ''}
-`;
-  
+      <!-- 🧾 ปุ่มสร้างใบสั่งซื้อ (ทุกคนเห็น) -->
+      <div
+        class="order-fab"
+        onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+        🧾
+      </div>
+    `;
+
     grid.appendChild(card);
   });
 
   return grid;
 }
+
   /* =========================
      ADMIN DASHBOARD
   ========================= */
