@@ -14,18 +14,16 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
 
+/* =====================================================
+   STEP 2 — UI STYLE FINAL (MERGED)
+   Rose Gold • Glass • Mobile-first • Production Safe
+===================================================== */
+
 /* =========================
-   DESIGN TOKENS (ROSE GOLD)
+   DESIGN TOKENS
 ========================= */
 :root {
-  --bg-main: radial-gradient(
-    circle at top,
-    #f7d9e3,
-    #f1c6d3 35%,
-    #e8b4c2 60%,
-    #d8a1b1
-  );
-
+  --bg-main: radial-gradient(circle at top,#f7d9e3,#f1c6d3 35%,#e8b4c2 60%,#d8a1b1);
   --glass: rgba(255,255,255,0.38);
   --glass-strong: rgba(255,255,255,0.55);
   --glass-border: rgba(255,255,255,0.65);
@@ -41,7 +39,6 @@
   --glow: 0 0 36px rgba(243,182,200,0.75);
 
   --primary-gold: #f3b6c8;
-  --primary-admin: #e879a7;
 }
 
 /* =========================
@@ -70,7 +67,6 @@ h1 {
   font-size: 1.6rem;
   margin: 0 0 14px;
   font-weight: 800;
-  letter-spacing: .3px;
 }
 
 p {
@@ -80,541 +76,183 @@ p {
 }
 
 /* =========================
-   GLASS CARD
+   CARD / GLASS
 ========================= */
 .card {
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,0.65),
-    rgba(255,255,255,0.28)
-  );
+  background: linear-gradient(180deg,rgba(255,255,255,0.65),rgba(255,255,255,0.28));
   border: 1px solid var(--glass-border);
   border-radius: 22px;
   padding: 16px;
   margin-bottom: 14px;
   backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
   box-shadow: var(--glow-soft);
 }
 
 /* =========================
-   HEADER
+   HEADER + SMART SCROLL
 ========================= */
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+  position:sticky;
+  top:0;
+  z-index:100;
+  transition:padding .25s ease,transform .25s ease,backdrop-filter .25s ease,background .25s ease;
+}
+
+.header.header--compact {
+  padding:6px 0;
+  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.55));
+}
+
+.brand-title {
+  padding:10px 26px;
+  border-radius:999px;
+  font-weight:900;
+  font-size:1.15rem;
+  background:linear-gradient(90deg,#fff5f9,#f3b6c8);
+  box-shadow:0 0 40px rgba(243,182,200,.85);
 }
 
 /* =========================
    BUTTON / BADGE
 ========================= */
-button,
-.badge {
-  font-family: inherit;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.75);
-  background: linear-gradient(
-    160deg,
-    #fff0f6,
-    #f3b6c8
-  );
-  color: #6b2239;
-  padding: 10px 18px;
-  font-size: .85rem;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: var(--glow-soft);
-  transition: all .25s ease;
+button,.badge {
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.75);
+  background:linear-gradient(160deg,#fff0f6,#f3b6c8);
+  padding:10px 18px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:var(--glow-soft);
+  transition:.25s;
 }
-
-button:hover,
-.badge:hover {
-  transform: translateY(-1px) scale(1.03);
-  box-shadow: var(--glow);
-}
+button:hover { transform:translateY(-1px) scale(1.03); }
 
 /* =========================
-   BRAND TITLE
-========================= */
-.brand-title {
-  padding: 10px 26px;
-  border-radius: 999px;
-  font-weight: 900;
-  font-size: 1.15rem;
-  letter-spacing: 1px;
-  color: #7a2e44;
-  background: linear-gradient(
-    90deg,
-    #fff5f9,
-    #f3b6c8
-  );
-  border: 2px solid rgba(255,255,255,0.9);
-  box-shadow: 0 0 40px rgba(243,182,200,.85);
-}
-
-
-/* =========================
-   ADMIN ACCENT
-========================= */
-.admin {
-  border-left: 4px solid var(--rose-deep);
-}
-
-/* =========================
-   STEP 2.4 — HEADER SMART
-========================= */
-
-/* header ปกติ */
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  transition:
-    padding .25s ease,
-    transform .25s ease,
-    backdrop-filter .25s ease,
-    background .25s ease;
-}
-
-/* ตอนเลื่อนลง */
-.header.header--compact {
-  padding-top: 6px;
-  padding-bottom: 6px;
-
-  backdrop-filter: blur(14px);
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,0.75),
-    rgba(255,255,255,0.55)
-  );
-}
-
-/* ลดขนาด title ตอน compact */
-.header.header--compact h1,
-.header.header--compact .brand-title {
-  transform: scale(0.9);
-  opacity: 0.85;
-}
-
-.header {
-  will-change: padding, transform;
-}
-
-
-  /* =========================
-   EMPTY STATE — UX POLISH
-========================= */
-.empty-state {
-  animation: fadeUp .35s ease;
-}
-
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}  
-
-
-/* =========================
-   STEP 2.6 — CLEAN META STRIP
-========================= */
-
-/* รหัสสินค้า */
-.product-code {
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  font-size: 0.65rem;
-  opacity: 0.75;
-}
-
-/* หมวด */
-.product-category {
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  font-weight: 700;
-}
-
-/* meta (จำนวน / สถานะ) */
-.meta-pill {
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}  
-</style>
-
-
-    <style>
-/* =========================
-   GRID BASE (REQUIRED)
+   GRID
 ========================= */
 .grid {
-  display: grid;
-  gap: 18px;
+  display:grid;
+  gap:18px;
 }
-</style>
+@media(max-width:520px){ .grid{grid-template-columns:1fr;} }
+@media(min-width:521px){ .grid{grid-template-columns:repeat(2,1fr);} }
 
-    <style>
 /* =========================
-   STEP 2.8 — MOBILE GRID FIX
-   เหลือ 1 สินค้าต่อแถว (มือถือ)
+   PRODUCT CARD
 ========================= */
-
-/* 📱 Mobile */
-@media (max-width: 520px) {
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-}
-
-/* 💻 Tablet / Desktop (คงเดิม) */
-@media (min-width: 521px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-      
-</style>
-
-<style>
-/* =========================
-   STEP 2.9 — PRODUCT CARD LUXURY (FINAL)
-   Clean • Breathable • Premium
-========================= */
-
-/* ===== PRODUCT CARD ===== */
 .product-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;                 /* ⬅️ คลายความอัด */
-
-  padding: 20px;
-  padding-bottom: 32px;      /* ⭐ เผื่อพื้นที่ FAB */
-  border-radius: 22px;
-
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,0.8),
-    rgba(255,255,255,0.4)
-  );
-
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.55),
-    0 22px 48px rgba(183,110,121,0.28);
-
-  transition:
-    transform .35s ease,
-    box-shadow .35s ease;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:20px 20px 32px;
+  border-radius:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,255,255,.4));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 22px 48px rgba(183,110,121,.28);
+  transition:.35s;
 }
+.product-card:hover { transform:translateY(-3px); }
 
-.product-card:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.65),
-    0 32px 68px rgba(183,110,121,0.38);
-}
-
-/* ===== IMAGE ===== */
 .product-img {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-
-  background-color: #ffffff;      /* ⬅️ แก้หลอกตา */
-  border-radius: 18px;
-
-  padding: 20px;                  /* ⬅️ รูปไม่ติด */
-  margin-bottom: 6px;
-
-  box-shadow:
-    inset 0 0 0 1px rgba(0,0,0,0.04);
+  width:100%;
+  aspect-ratio:1/1;
+  background:center/contain no-repeat #fff;
+  border-radius:18px;
+  padding:20px;
 }
 
-/* ===== NAME ===== */
-.product-name {
-  font-weight: 800;
-  font-size: 0.95rem;
-  line-height: 1.4;
-}
+.product-name { font-weight:800; font-size:.95rem; }
+.product-price { font-weight:900; font-size:1.15rem; color:var(--rose-deep); }
 
-/* ===== PRICE (HERO) ===== */
-.product-price {
-  font-weight: 900;
-  font-size: 1.15rem;
-  margin: 4px 0 8px;
-  color: var(--rose-deep);
-}
-
-/* ===== META ===== */
 .product-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-
-  font-size: 0.75rem;
-  opacity: 0.85;
-
-  padding-top: 10px;
-  border-top: 1px dashed rgba(183,110,121,0.25);
-}
-
-/* ===== ORDER FAB ===== */
-.order-fab {
-  position: absolute;
-  bottom: 14px;
-  right: 14px;
-
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: linear-gradient(
-    135deg,
-    rgba(255,255,255,0.95),
-    var(--rose-gold)
-  );
-
-  font-size: 15px;
-  cursor: pointer;
-
-  opacity: 0.85;
-  box-shadow: 0 0 20px rgba(243,182,200,0.6);
-
-  transition: all .25s ease;
-}
-
-.product-card:hover .order-fab {
-  opacity: 1;
-  transform: translateY(-1px) scale(1.05);
-  box-shadow: 0 0 34px rgba(243,182,200,0.9);
-}
-
-/* ===== MOBILE ===== */
-@media (max-width: 520px) {
-  .product-card {
-    padding: 22px;
-    padding-bottom: 36px;
-  }
-
-  .order-fab {
-    bottom: 16px;
-    right: 16px;
-  }
-}
-</style>
-
-
-    
-    <style>
-/* ===== PRODUCT DETAIL MODAL ===== */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.modal-card {
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  width: 92%;
-  max-width: 420px;
-  padding: 16px;
-  box-shadow: var(--glow);
-}
-
-.modal-img {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 14px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-color: #020617;
-  margin-bottom: 12px;
-}
-
-.modal-close {
-  text-align: right;
-  font-size: 0.8rem;
-  color: var(--primary-gold);
-  cursor: pointer;
-}
-
-     /* =========================
-   SPINNER (ORIGINAL STYLE)
-========================= */
-.spinner {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-
-  border: 4px solid rgba(243,182,200,0.35);
-  border-top-color: #b76e79;
-
-  animation: spin 0.9s linear infinite;
-
-  box-shadow:
-    0 0 12px rgba(243,182,200,0.6),
-    inset 0 0 6px rgba(255,255,255,0.4);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ===== VARIANT (KEEP LOGIC SAFE) ===== */
-.spinner.in {
-  border-top-color: #b76e79;
-}
-
-.spinner.out {
-  border-top-color: #b76e79;
+  display:flex;
+  justify-content:space-between;
+  font-size:.75rem;
+  padding-top:10px;
+  border-top:1px dashed rgba(183,110,121,.25);
 }
 
 /* =========================
-   SIDEBAR (HAMBURGER ONLY)
+   ORDER FAB
+========================= */
+.order-fab {
+  position:absolute;
+  bottom:14px;
+  right:14px;
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#fff,var(--rose-gold));
+  box-shadow:0 0 20px rgba(243,182,200,.6);
+  cursor:pointer;
+}
+
+/* =========================
+   MODAL
+========================= */
+.modal-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(6px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+.modal-card {
+  background:var(--glass);
+  border-radius:20px;
+  width:92%;
+  max-width:420px;
+  padding:16px;
+  box-shadow:var(--glow);
+}
+.modal-img {
+  width:100%;
+  aspect-ratio:1/1;
+  background:center/contain no-repeat #fff;
+  border-radius:14px;
+  margin-bottom:12px;
+}
+
+/* =========================
+   SIDEBAR / HAMBURGER
 ========================= */
 .sidebar {
-  position: fixed;
-  top: 0;
-  right: -280px;        /* ซ่อนสนิท */
-  width: 260px;
-  height: 100vh;
-
-  background: linear-gradient(
-    180deg,
-    #fff0f6,
-    #f3b6c8
-  );
-
-  padding: 20px;
-  z-index: 10000;
-
-  transition: right 0.3s ease;
-  box-shadow: -10px 0 40px rgba(0,0,0,0.25);
+  position:fixed;
+  right:-280px;
+  width:260px;
+  height:100vh;
+  background:linear-gradient(180deg,#fff0f6,#f3b6c8);
+  padding:20px;
+  transition:.3s;
 }
+.sidebar.show { right:0; }
 
-/* แสดงเฉพาะตอนกด ☰ */
-.sidebar.show {
-  right: 0;
-}
-
-/* ปุ่มใน sidebar */
-.sidebar button {
-  width: 100%;
-  margin-bottom: 10px;
-  border-radius: 999px;
-}      
-
-.sidebar-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.25);
-  backdrop-filter: blur(2px);
-  z-index: 9999;
-}
-
-/* =========================
-   CATEGORY COLORS
-========================= */
-.code-bag {
-  background: linear-gradient(90deg,#fde7ef,#f3b6c8);
-  color: #7a2e44;
-}
-
-.code-jewelry {
-  background: linear-gradient(90deg,#fff5c3,#facc15);
-  color: #7a5c00;
-}
-
-.code-utility {
-  background: linear-gradient(90deg,#e0f2fe,#bae6fd);
-  color: #075985;
-}
-
-.code-doll {
-  background: linear-gradient(90deg,#ede9fe,#ddd6fe);
-  color: #4c1d95;
-}
-
-.code-other {
-  background: linear-gradient(90deg,#f1f5f9,#e5e7eb);
-  color: #334155;
-}
-
-/* =========================
-   HAMBURGER (ADMIN MENU)
-========================= */
 .hamburger {
-  font-size: 1.6rem;
-  line-height: 1;
-  cursor: pointer;
-
-  padding: 10px 14px;
-  border-radius: 14px;
-
-  background: linear-gradient(
-    160deg,
-    rgba(255,255,255,0.7),
-    rgba(255,255,255,0.35)
-  );
-
-  border: 1px solid rgba(255,255,255,0.8);
-
-  box-shadow:
-    0 0 18px rgba(243,182,200,0.6),
-    inset 0 0 0 1px rgba(255,255,255,0.6);
-
-  transition: all .25s ease;
-}
-
-.hamburger:hover {
-  transform: translateY(-1px) scale(1.05);
-  box-shadow:
-    0 0 30px rgba(243,182,200,0.9),
-    inset 0 0 0 1px rgba(255,255,255,0.8);
-}
-
-      /* =========================
-   HEADER ACTION GROUP FIX
-========================= */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  font-size:1.6rem;
+  padding:10px 14px;
+  border-radius:14px;
+  background:linear-gradient(160deg,rgba(255,255,255,.7),rgba(255,255,255,.35));
+  cursor:pointer;
 }
 
 .header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
-
 </style>
+
 
   <!-- ========================= -->
   <!-- APP ROOT -->
@@ -1275,9 +913,11 @@ function openOrderSlip(p) {
     width:100%;
     aspect-ratio:1/1;
     object-fit:contain;
-    border-radius:14px;
-    background:#020617;
-    margin-bottom:12px;
+    border-radius:16px;
+    background:#ffffff;
+    padding:16px;
+    margin-bottom:14px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
   "
 />
 
@@ -1307,11 +947,20 @@ function openOrderSlip(p) {
   />
 
   <button
-    class="admin-stock-btn"
-    style="width:100%"
-    onclick="createOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-    📄 สร้างใบสั่งซื้อ
-  </button>
+  style="
+    width:100%;
+    padding:14px;
+    border-radius:999px;
+    border:none;
+    font-weight:900;
+    font-size:.95rem;
+    color:#6b2239;
+    background:linear-gradient(90deg,#fff5f9,#f3b6c8);
+    box-shadow:0 0 32px rgba(243,182,200,.9);
+  "
+  onclick="createOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+  📄 สร้างใบสั่งซื้อ
+</button>
 `;
 
   overlay.appendChild(card);
@@ -1598,17 +1247,20 @@ function openProductDetail(p) {
       ✕ ปิด
     </div>
 
-    <img
+   <img
   src="${p.image || ''}"
   style="
     width:100%;
     aspect-ratio:1/1;
     object-fit:contain;
-    border-radius:14px;
-    background:#020617;
-    margin-bottom:12px;
+    border-radius:16px;
+    background:#ffffff;
+    padding:16px;
+    margin-bottom:14px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
   "
 />
+
 
     <h3 style="margin:4px 0">${p.name}</h3>
 
