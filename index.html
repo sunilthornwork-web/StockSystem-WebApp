@@ -485,23 +485,24 @@ button:hover,
   let sessionExpiredHandled = false; // ✅ อยู่ตรงนี้
 
   const state = {
-    mode: 'viewer',
-    token: null,
-    role: 'viewer',
-    username: null,
+  mode: 'viewer',
+  token: null,
+  role: 'viewer',
+  username: null,
 
-    products: [],
-    filteredProducts: [],
+  products: [],
+  filteredProducts: [],
+  pendingOrders: [], // ✅ STEP 3 ใช้ตัวนี้
 
-    search: '',
-    category: 'all',
+  search: '',
+  category: 'all',
 
-    loading: false,
-    error: null,
+  loading: false,
+  error: null,
 
-    submitting: false,
-    logs: []
-  };
+  submitting: false,
+  logs: []
+};
 
   const SESSION_MAX_AGE = 24 * 60 * 60 * 1000;
   const SESSION_WARN_BEFORE = 5 * 60 * 1000;
@@ -601,6 +602,10 @@ function startPingSession() {
   const savedToken = localStorage.getItem('admin_token');
   const savedRole  = localStorage.getItem('admin_role');
   const savedUser  = localStorage.getItem('admin_username');
+    const savedOrders = localStorage.getItem('pendingOrders');
+if (savedOrders) {
+  state.pendingOrders = JSON.parse(savedOrders);
+}
 
   if (savedToken && savedRole && savedUser) {
     state.mode = 'admin';
@@ -1055,126 +1060,87 @@ function openOrderSlip(p) {
   card.onclick = e => e.stopPropagation();
 
   card.innerHTML = `
-    <h3 style="margin-bottom:12px">🧾 ใบสั่งซื้อ</h3>
+  <h3 style="margin-bottom:12px">🧾 ใบสั่งซื้อ</h3>
 
-    <div class="modal-img"
-      style="background-image:url('${p.image || ''}')">
-    </div>
+  <div class="modal-img"
+    style="background-image:url('${p.image || ''}')">
+  </div>
 
-    <p><b>${p.name}</b></p>
-    <p style="font-size:0.8rem;color:#94a3b8">
-      รหัสสินค้า: ${p.code}
-    </p>
+  <p><b>${p.name}</b></p>
+  <p style="font-size:0.8rem;color:#94a3b8">
+    รหัสสินค้า: ${p.code}
+  </p>
 
-    <input
-      id="order-qty"
-      type="number"
-      min="1"
-      placeholder="จำนวนที่สั่ง"
-      style="
-        width:100%;
-        padding:12px;
-        margin:12px 0;
-        border-radius:12px;
-        border:none;
-      "
-    />
+  <input
+    id="order-by"
+    placeholder="ชื่อผู้สั่ง / ร้าน / ลูกค้า"
+    style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:none;"
+  />
 
-    <button
-      class="admin-stock-btn"
-      style="width:100%"
-      onclick="createOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-      📄 สร้างใบสั่งซื้อ
-    </button>
-  `;
+  <input
+    id="order-note"
+    placeholder="หมายเหตุ (ถ้ามี)"
+    style="width:100%;padding:12px;margin-bottom:10px;border-radius:12px;border:none;"
+  />
+
+  <input
+    id="order-qty"
+    type="number"
+    min="1"
+    placeholder="จำนวนที่สั่ง"
+    style="width:100%;padding:12px;margin-bottom:12px;border-radius:12px;border:none;"
+  />
+
+  <button
+    class="admin-stock-btn"
+    style="width:100%"
+    onclick="createOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+    📄 สร้างใบสั่งซื้อ
+  </button>
+`;
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 }
 
-async function createOrderSlip(p) {
+function createOrderSlip(p) {
   const qty = Number(document.getElementById('order-qty').value);
+  const by = document.getElementById('order-by').value.trim();
+  const note = document.getElementById('order-note').value.trim();
+
+  if (!by) {
+    showToast('❌ กรุณาระบุชื่อผู้สั่ง', 'error');
+    return;
+  }
+
   if (!qty || qty <= 0) {
-    showToast('❌ กรุณากรอกจำนวนที่สั่ง', 'error');
+    showToast('❌ กรุณากรอกจำนวน', 'error');
     return;
   }
 
-  // 🔒 เช็กสต๊อกพอไหม
   if (qty > p.stock) {
-    showToast('❌ สต๊อกไม่เพียงพอ', 'error');
+    showToast('❌ สต๊อกไม่พอ', 'error');
     return;
   }
 
-  // 🔄 หักสต๊อกก่อน (ส่งออก = ติดลบ)
-  try {
-    await apiUpdateStock(p.code, -qty);
-
-    // อัปเดต state ทันที (ไม่ต้อง refresh)
-    const product = state.products.find(x => x.code === p.code);
-    if (product) {
-      product.stock -= qty;
-      product.updatedAt = Date.now();
-    }
-
-  } catch (e) {
-    showToast('❌ หักสต๊อกไม่สำเร็จ', 'error');
-    return;
-  }
-
-  // ===== สร้างใบสั่งซื้อ PNG =====
-  const canvas = document.createElement('canvas');
-  canvas.width = 360;
-  canvas.height = 560;
-  const ctx = canvas.getContext('2d');
-
-  const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  bg.addColorStop(0, '#6d28d9');
-  bg.addColorStop(1, '#2e1065');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-  ctx.lineWidth = 1.5;
-  roundRect(ctx, 20, 20, 320, 520, 20, true, true);
-
-  ctx.fillStyle = '#fde68a';
-  ctx.font = 'bold 20px Sarabun, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('ใบสั่งซื้อ', canvas.width / 2, 55);
-
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    ctx.drawImage(img, 80, 80, 200, 200);
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '16px Sarabun, sans-serif';
-    ctx.fillText(`สินค้า: ${p.name}`, 40, 320);
-    ctx.fillText(`รหัสสินค้า: ${p.code}`, 40, 350);
-    ctx.fillText(`จำนวนที่สั่ง: ${qty}`, 40, 380);
-
-    ctx.font = '14px Sarabun, sans-serif';
-    ctx.fillStyle = '#fde68a';
-    ctx.fillText(
-      `วันที่: ${new Date().toLocaleString('th-TH')}`,
-      40,
-      420
-    );
-
-    const link = document.createElement('a');
-    link.download = `order_${p.code}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-
-    showToast('🧾 สร้างใบสั่งซื้อและหักสต๊อกแล้ว');
-    document.querySelector('.modal-overlay')?.remove();
-    renderUI(); // ♻️ รีเรนเดอร์ให้จำนวนใหม่ขึ้น
+  const order = {
+    id: 'ORD-' + Date.now(),
+    code: p.code,
+    name: p.name,
+    qty,
+    image: p.image || '',
+    orderedBy: by,
+    note,
+    createdAt: Date.now()
   };
 
-  img.src = p.image || '';
+  state.pendingOrders.push(order);
+  localStorage.setItem('pendingOrders', JSON.stringify(state.pendingOrders));
+
+  document.querySelector('.modal-overlay')?.remove();
+  showToast('🕓 สร้างใบสั่งซื้อแล้ว รอแอดมินยืนยัน');
 }
+
 
 /* ===== Helper: Rounded Rect ===== */
 function roundRect(ctx, x, y, w, h, r, fill, stroke) {
@@ -1744,10 +1710,12 @@ main.innerHTML = `
 
   <button style="width:100%"
     onclick="exportCSV()">📤 Export CSV</button>
-`;
-root.appendChild(main);
+`;root.appendChild(main);
 
-    // ===== LOAD PRODUCTS (ADMIN) =====
+// ✅ STEP 3: แสดงใบสั่งซื้อรออนุมัติ
+renderPendingOrders(root);
+
+// โหลดสินค้า
 if (state.products.length === 0 && !state.loading) {
   state.loading = true;
   renderUI();
@@ -1801,6 +1769,116 @@ if (state.products.length === 0 && !state.loading) {
 });
 
     }
+
+  function renderPendingOrders(root) {
+  if (!state.pendingOrders.length) return;
+
+  const box = document.createElement('div');
+  box.className = 'card';
+  box.innerHTML = `<h3>🕓 ใบสั่งซื้อรออนุมัติ</h3>`;
+
+  state.pendingOrders.forEach(o => {
+    const item = document.createElement('div');
+    item.style.marginBottom = '14px';
+
+    item.innerHTML = `
+      <div style="display:flex;gap:12px;align-items:center">
+        <div style="
+          width:64px;
+          height:64px;
+          background:url('${o.image || ''}') center/contain no-repeat;
+          background-color:rgba(255,255,255,.2);
+          border-radius:12px">
+        </div>
+
+        <div style="flex:1;font-size:.85rem">
+          <b>${o.name}</b><br/>
+          รหัส: ${o.code}<br/>
+          จำนวน: <b>${o.qty}</b><br/>
+          👤 ผู้สั่ง: <b>${o.orderedBy}</b><br/>
+          ${o.note ? `📝 ${o.note}<br/>` : ''}
+          🕒 ${new Date(o.createdAt).toLocaleString('th-TH')}
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button
+          class="admin-stock-btn"
+          onclick="approveOrder('${o.id}')">
+          ✅ ยืนยันหักสต๊อก
+        </button>
+
+        <button
+          style="background:#ef4444;color:white"
+          onclick="rejectOrder('${o.id}')">
+          ❌ ลบใบสั่ง
+        </button>
+      </div>
+    `;
+
+    box.appendChild(item);
+  });
+
+  root.appendChild(box);
+}
+  async function approveOrder(orderId) {
+  const order = state.pendingOrders.find(o => o.id === orderId);
+  if (!order) return;
+
+  // 🔐 กันสต๊อกไม่พอ
+  const product = state.products.find(p => p.code === order.code);
+  if (!product || product.stock < order.qty) {
+    showToast('❌ สต๊อกไม่เพียงพอ', 'error');
+    return;
+  }
+
+  // ⛔ ยืนยันก่อนหักจริง
+  showConfirm({
+    title: 'ยืนยันหักสต๊อก',
+    message: `
+      <div style="text-align:center">
+        สินค้า <b>${order.name}</b><br/>
+        จำนวน <b>${order.qty}</b> ชิ้น
+      </div>
+    `,
+    onConfirm: async () => {
+  try {
+    await apiUpdateStock(order.code, -order.qty);
+
+    product.stock -= order.qty;
+    product.updatedAt = Date.now();
+
+    state.pendingOrders =
+      state.pendingOrders.filter(o => o.id !== orderId);
+    localStorage.setItem(
+      'pendingOrders',
+      JSON.stringify(state.pendingOrders)
+    );
+
+    showToast('✅ หักสต๊อกเรียบร้อย');
+    renderUI();
+  } catch {
+    showToast('❌ หักสต๊อกไม่สำเร็จ', 'error');
+  }
+}
+
+
+function rejectOrder(orderId) {
+  const ok = confirm('ลบใบสั่งซื้อนี้?');
+  if (!ok) return;
+
+  state.pendingOrders =
+    state.pendingOrders.filter(o => o.id !== orderId);
+
+  localStorage.setItem(
+    'pendingOrders',
+    JSON.stringify(state.pendingOrders)
+  );
+
+  showToast('🗑️ ลบใบสั่งซื้อแล้ว');
+  renderUI();
+}
+
   /* =========================
      PRODUCT FORM
   ========================= */
