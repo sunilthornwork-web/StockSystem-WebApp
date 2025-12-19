@@ -1691,10 +1691,10 @@ function getCategoryClass(category = '') {
 
   ${state.role !== 'viewer' ? `
     <div
-      class="order-fab"
-      onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-      🧾
-    </div>
+  class="order-fab"
+  onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+  🧾
+</div>
   ` : ''}
 `;
   
