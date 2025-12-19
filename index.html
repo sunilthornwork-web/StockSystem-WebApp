@@ -829,6 +829,16 @@ button:hover,
   font-weight: 600;
   opacity: 0.85;
 }
+
+  /* =========================
+   PRICE ALIGN FIX
+========================= */
+.product-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;           /* ระยะ icon กับตัวเลข */
+}
+
 </style>
 
 
@@ -1828,7 +1838,10 @@ function openProductDetail(p) {
 
     <h3 style="margin:4px 0">${p.name}</h3>
 
-    <div class="product-price">฿${p.price}</div>
+    <div class="product-price">
+  💰 ฿${p.price}
+</div>
+
 
     <p>📦 คงเหลือ: <b>${p.stock}</b></p>
     <p>🏷️ หมวด: ${p.category}</p>
