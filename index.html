@@ -696,15 +696,12 @@ if (savedOrders) {
     return null;
   }
     if (err.message === 'Unauthorized') {
-      if (state.mode !== 'admin') return null;
-
-      if (!sessionExpiredHandled) {
-        sessionExpiredHandled = true;
-        alert('Session หมดอายุ กรุณา login ใหม่');
-        logoutAdmin();
-      }
-      return null;
-    }
+  // 🔕 เงียบ ไม่ต้อง error UI
+  if (state.mode === 'admin') {
+    logoutAdmin();
+  }
+  return null;
+}
 
     state.error = err.message || 'Server error';
     return null;
