@@ -495,13 +495,16 @@ button:hover,
   <!-- ========================= -->
   <div id="app"></div>
 
-<!-- ========================= -->
-<!-- GLOBAL STATE -->
-<!-- ========================= -->
 <script>
-  let sessionExpiredHandled = false; // ✅ อยู่ตรงนี้
+/* =========================
+   GLOBAL STATE (PRODUCTION)
+========================= */
 
-  const state = {
+let sessionTimer = null;
+let pingTimer = null;
+let sessionExpiredHandled = false;
+
+const state = {
   mode: 'viewer',
   token: null,
   role: 'viewer',
@@ -509,7 +512,7 @@ button:hover,
 
   products: [],
   filteredProducts: [],
-  pendingOrders: [], // ✅ STEP 3 ใช้ตัวนี้
+  pendingOrders: [],
 
   search: '',
   category: 'all',
@@ -517,16 +520,12 @@ button:hover,
   loading: false,
   error: null,
 
-  submitting: false,
-  logs: []
+  submittingForm: false,
+  submittingStock: false,
+  submittingAuth: false
 };
-
-  const SESSION_MAX_AGE = 24 * 60 * 60 * 1000;
-  const SESSION_WARN_BEFORE = 5 * 60 * 1000;
-  
-  let sessionTimer = null;
-  let pingTimer = null;
 </script>
+
 
       
     <script>
@@ -641,32 +640,36 @@ if (savedOrders) {
 }
 
   async function logoutAdmin() {
-  if (state.token) {
-    try {
-      await apiLogout();
-    } catch (e) {
-      console.warn('Logout backend failed:', e.message);
+  if (state.submittingAuth) return;
+  state.submittingAuth = true;
+
+  showGlobalLoading('กำลังออกจากระบบ');
+
+  try {
+    if (state.token) {
+      try { await apiLogout(); } catch {}
     }
+
+    clearInterval(sessionTimer);
+    clearInterval(pingTimer);
+
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_role');
+    localStorage.removeItem('admin_username');
+    localStorage.removeItem('admin_login_time');
+
+    state.mode = 'viewer';
+    state.token = null;
+    state.role = 'viewer';
+    state.username = null;
+    state.error = null;
+
+    sessionExpiredHandled = false;
+    renderUI();
+  } finally {
+    state.submittingAuth = false;
+    hideGlobalLoading();
   }
-
-  clearInterval(sessionTimer); // ✅ สำคัญ
-  clearInterval(pingTimer); // ✅ เพิ่ม  
-
-  localStorage.removeItem('admin_token');
-  localStorage.removeItem('admin_role');
-  localStorage.removeItem('admin_username');
-  localStorage.removeItem('admin_login_time');
-
-  state.mode = 'viewer';
-  state.token = null;
-  state.role = 'viewer';
-  state.username = null;
-    
-  state.error = null;        // ✅ เคลียร์ error ค้าง
-  state.loading = false;    // ✅ กัน overlay ค้าง
-
-  sessionExpiredHandled = false;  
-  renderUI();
 }
 
 </script>
@@ -678,8 +681,12 @@ if (savedOrders) {
 <script>
   async function apiRequest(action, payload = {}) {
   try {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 15000); // timeout 15s
+
     const res = await fetch(API_URL, {
       method: 'POST',
+      signal: controller.signal,
       body: JSON.stringify({
         action,
         token: state.token,
@@ -693,20 +700,18 @@ if (savedOrders) {
     return data.data;
 
   } catch (err) {
-    
-    if (err.message.includes('Rate limit')) {
-    alert(err.message);
-    return null;
-  }
-    if (err.message === 'Unauthorized') {
-  // 🔕 เงียบ ไม่ต้อง error UI
-  if (state.mode === 'admin') {
-    logoutAdmin();
-  }
-  return null;
-}
+    if (err.name === 'AbortError') {
+      showToast('⏱️ เซิร์ฟเวอร์ตอบช้า', 'error');
+      return null;
+    }
 
-    state.error = err.message || 'Server error';
+    if (err.message === 'Unauthorized') {
+      if (state.mode === 'admin') logoutAdmin();
+      return null;
+    }
+
+    console.error(err);
+    showToast('❌ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้', 'error');
     return null;
   }
 }
@@ -836,14 +841,14 @@ async function changeUserRole(username, role) {
   const ok = confirm(`เปลี่ยน ${username} เป็น ${role}?`);
   if (!ok) return;
 
-  if (state.submitting) return;
+  if (state.submittingAuth) return;
 
   let res = null;
   try {
-    state.submitting = true;
+    state.submittingAuth = true;
     res = await apiUpdateUserRole(username, role);
   } finally {
-    state.submitting = false;
+    state.submittingAuth = false;
   }
 
   if (res) {
@@ -991,6 +996,41 @@ const getVal = (id) => {
 <!-- RENDER FUNCTIONS -->
 <!-- ========================= -->
     <script>
+/* =========================
+   GLOBAL LOADING OVERLAY
+========================= */
+function showGlobalLoading(text = 'กำลังดำเนินการ...') {
+  let overlay = document.getElementById('global-loading');
+  if (overlay) return;
+
+  overlay = document.createElement('div');
+  overlay.id = 'global-loading';
+  overlay.style = `
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+  `;
+
+  overlay.innerHTML = `
+    <div class="card" style="text-align:center">
+      <div class="spinner" style="margin:0 auto 12px"></div>
+      <b>${text}</b>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+function hideGlobalLoading() {
+  document.getElementById('global-loading')?.remove();
+}
+</script>
+
+    <script>
 function showToast(text, type = 'success') {
   const div = document.createElement('div');
   div.textContent = text;
@@ -1016,8 +1056,8 @@ function showToast(text, type = 'success') {
 }
 </script>
 
-  <script>
-function showConfirm({ title, message, onConfirm }) {
+ <script>
+function showConfirm({ title, message, type = 'out', onConfirm }) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
@@ -1043,21 +1083,21 @@ function showConfirm({ title, message, onConfirm }) {
   const textSpan = card.querySelector('.btn-text');
 
   confirmBtn.onclick = async () => {
-  confirmBtn.classList.add('loading-btn');
-  cancelBtn.disabled = true;
+    confirmBtn.classList.add('loading-btn');
+    cancelBtn.disabled = true;
 
-  textSpan.textContent = 'กำลังบันทึก';
+    textSpan.textContent = 'กำลังบันทึก';
 
-  const spinner = document.createElement('div');
-  spinner.className =
-    'spinner ' + (message.includes('รับเข้า') ? 'in' : 'out');
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner ' + (type === 'in' ? 'in' : 'out');
+    textSpan.before(spinner);
 
-  textSpan.before(spinner);
-
-  await onConfirm();
-  overlay.remove();
-};
-
+    try {
+      await onConfirm();
+    } finally {
+      overlay.remove();
+    }
+  };
 
   cancelBtn.onclick = () => overlay.remove();
 
@@ -1065,6 +1105,7 @@ function showConfirm({ title, message, onConfirm }) {
   document.body.appendChild(overlay);
 }
 </script>
+
 
 <script>
 function openOrderSlip(p) {
@@ -1430,8 +1471,8 @@ function openProductDetail(p) {
      VIEWER SUPPORT
   ========================= */
 async function adjustStock(code, diff) {
-  if (state.submitting) return;
-  state.submitting = true;
+  if (state.submittingStock) return;
+  state.submittingStock = true;
 
   try {
     const res = await apiUpdateStock(code, diff);
@@ -1440,14 +1481,14 @@ async function adjustStock(code, diff) {
     const p = state.products.find(p => p.code === code);
     if (p) {
       p.stock += diff;
-      p.updatedAt = Date.now(); // ✅ เพิ่มบรรทัดนี้
+      p.updatedAt = Date.now();
     }
 
     showToast('📦 อัปเดตสต๊อกแล้ว');
   } catch {
     showToast('❌ อัปเดตไม่สำเร็จ', 'error');
   } finally {
-    state.submitting = false;
+    state.submittingStock = false;
     renderUI();
   }
 }
@@ -1603,28 +1644,38 @@ function drawDashboardChart(history) {
   }
 
   async function submitLogin() {
-  const u = document.getElementById('login-user').value;
-  const p = document.getElementById('login-pass').value;
+  if (state.submittingAuth) return;
+  state.submittingAuth = true;
 
-  const data = await apiLogin(u, p);
-  if (!data) return;
+  showGlobalLoading('กำลังเข้าสู่ระบบ');
 
-  const now = Date.now();
+  try {
+    const u = document.getElementById('login-user').value;
+    const p = document.getElementById('login-pass').value;
 
-  localStorage.setItem('admin_token', data.token);
-  localStorage.setItem('admin_role', data.role);
-  localStorage.setItem('admin_username', u.toLowerCase());
-  localStorage.setItem('admin_login_time', now); // ✅ เพิ่ม
+    const data = await apiLogin(u, p);
+    if (!data) return;
 
-  state.token = data.token;
-  state.role = data.role;
-  state.username = u.toLowerCase();
-  state.mode = 'admin';
-    
-  sessionExpiredHandled = false; // ✅ reset flag
-  startSessionWatcher(); // ✅ เริ่มจับเวลา
-  startPingSession();      // ✅ เพิ่มบรรทัดนี้  
-  renderUI();
+    const now = Date.now();
+    localStorage.setItem('admin_token', data.token);
+    localStorage.setItem('admin_role', data.role);
+    localStorage.setItem('admin_username', u.toLowerCase());
+    localStorage.setItem('admin_login_time', now);
+
+    state.token = data.token;
+    state.role = data.role;
+    state.username = u.toLowerCase();
+    state.mode = 'admin';
+
+    sessionExpiredHandled = false;
+    startSessionWatcher();
+    startPingSession();
+
+    renderUI();
+  } finally {
+    state.submittingAuth = false;
+    hideGlobalLoading();
+  }
 }
 
 
@@ -1692,17 +1743,21 @@ function drawDashboardChart(history) {
   ========================= */
 
   function renderUI() {
-    const app = document.getElementById('app');
-    app.innerHTML = '';
+  const app = document.getElementById('app');
+  app.innerHTML = '';
 
+  try {
     if (state.mode === 'viewer') renderViewer(app);
     if (state.mode === 'admin') renderAdmin(app);
-
-    if (state.loading || state.submitting) {
-      renderOverlay(app);
-    }
+  } catch (e) {
+    console.error(e);
+    app.innerHTML = `
+      <div class="card">
+        ❌ ระบบขัดข้อง กรุณารีเฟรชหน้า
+      </div>
+    `;
   }
-
+}
   /* =========================
      VIEWER
   ========================= */
@@ -2039,7 +2094,7 @@ function rejectOrder(orderId) {
       ${product?.image ? `<img src="${product.image}" style="width:100%;border-radius:12px;margin-top:8px;" />` : ''}
 
       <button
-  ${state.submitting ? 'disabled' : ''}
+  ${state.submittingForm ? 'disabled' : ''}
   style="margin-top:12px;width:100%;padding:12px;background:#38bdf8;"
   onclick="submitProduct(${isEdit})"
 >
@@ -2052,8 +2107,10 @@ function rejectOrder(orderId) {
   }
 
 async function submitProduct(isEdit = false) {
-  if (state.submitting) return;
-  state.submitting = true;
+  if (state.submittingForm) return;
+  state.submittingForm = true;
+
+  showGlobalLoading(isEdit ? 'กำลังบันทึกสินค้า' : 'กำลังเพิ่มสินค้า');
 
   try {
     const code = getVal('p-code');
@@ -2069,15 +2126,9 @@ async function submitProduct(isEdit = false) {
     };
 
     const err = validateProduct(product);
-    if (err) {
-      alert(err);
-      return;
-    }
+    if (err) throw new Error(err);
 
-    // ===== IMAGE =====
-    const fileInput = document.getElementById('p-image');
-    const file = fileInput?.files?.[0] || null;
-
+    const file = document.getElementById('p-image')?.files?.[0];
     if (file) {
       const imageUrl = await apiUploadImage(file);
       if (!imageUrl) throw new Error('อัปโหลดรูปไม่สำเร็จ');
@@ -2087,35 +2138,27 @@ async function submitProduct(isEdit = false) {
         state.products.find(p => p.code === code)?.image || '';
     }
 
-    // ===== SAVE =====
     if (isEdit) {
       await apiUpdateProduct(product);
-
-      const idx = state.products.findIndex(p => p.code === code);
-      if (idx !== -1) {
-        state.products[idx] = { ...state.products[idx], ...product };
-      }
+      const i = state.products.findIndex(p => p.code === code);
+      if (i !== -1) state.products[i] = { ...state.products[i], ...product };
     } else {
       const saved = await apiAddProduct(product);
-      if (saved && saved.code) {
-        state.products.push(saved);
-        applyFilter();
-      } else {
-        await loadProducts();
-      }
+      if (saved) state.products.push(saved);
     }
 
-  } catch (e) {
-    console.error(e);
-    alert(e.message || 'เพิ่ม / แก้ไขสินค้าไม่สำเร็จ');
-  } finally {
-    state.submitting = false;
+    applyFilter();
     renderUI();
+
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    state.submittingForm = false;
+    hideGlobalLoading();
   }
 }
-
-
-   
+  
+     
    /* =========================
      COMMON
   ========================= */
@@ -2138,23 +2181,6 @@ async function submitProduct(isEdit = false) {
   div.innerHTML = `<p>❌ ${msg}</p>`;
   return div;
 }
-
-    function renderOverlay(root) {
-    const overlay = document.createElement('div');
-    overlay.style = `
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,0.5);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:9999;
-    `;
-    overlay.innerHTML = `
-      <div class="card">⏳ กำลังประมวลผล...</div>
-    `;
-    root.appendChild(overlay);
-  }
 
   function exportCSV() {
   if (!state.products.length) {
