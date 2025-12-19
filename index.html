@@ -346,6 +346,15 @@ button:hover,
   margin-bottom: 10px;
   border-radius: 999px;
 }      
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+}
+      
 </style>
 
 
@@ -1296,9 +1305,20 @@ function renderProductGridOnly() {
     
 <script>
     function toggleSidebar() {
-  document.getElementById('sidebar')
-    .classList.toggle('show');
+  const sidebar = document.getElementById('sidebar');
+  const open = sidebar.classList.toggle('show');
+
+  if (open) {
+    const bg = document.createElement('div');
+    bg.className = 'sidebar-backdrop';
+    bg.onclick = toggleSidebar;
+    bg.id = 'sidebar-bg';
+    document.body.appendChild(bg);
+  } else {
+    document.getElementById('sidebar-bg')?.remove();
+  }
 }
+
 </script>
     
 <script>
