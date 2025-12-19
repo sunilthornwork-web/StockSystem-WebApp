@@ -1079,9 +1079,17 @@ function openOrderSlip(p) {
   card.innerHTML = `
   <h3 style="margin-bottom:12px">🧾 ใบสั่งซื้อ</h3>
 
-  <div class="modal-img"
-    style="background-image:url('${p.image || ''}')">
-  </div>
+  <img
+  src="${p.image || ''}"
+  style="
+    width:100%;
+    aspect-ratio:1/1;
+    object-fit:contain;
+    border-radius:14px;
+    background:#020617;
+    margin-bottom:12px;
+  "
+/>
 
   <p><b>${p.name}</b></p>
   <p style="font-size:0.8rem;color:#94a3b8">
