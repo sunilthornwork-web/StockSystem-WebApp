@@ -1101,31 +1101,77 @@ function createOrderSlip(p) {
 
   const canvas = document.createElement('canvas');
   canvas.width = 360;
-  canvas.height = 480;
+  canvas.height = 560;
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // ===== Background (Luxury Purple) =====
+  const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bg.addColorStop(0, '#6d28d9');
+  bg.addColorStop(1, '#2e1065');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = '#000';
-  ctx.font = '16px sans-serif';
-  ctx.fillText('ใบสั่งซื้อ', 140, 30);
+  // ===== Glass Card =====
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, 20, 20, 320, 520, 20, true, true);
 
-  ctx.font = '14px sans-serif';
-  ctx.fillText(`สินค้า: ${p.name}`, 20, 80);
-  ctx.fillText(`รหัส: ${p.code}`, 20, 110);
-  ctx.fillText(`จำนวน: ${qty}`, 20, 140);
-  ctx.fillText(
-    `วันที่: ${new Date().toLocaleString('th-TH')}`,
-    20, 170
-  );
+  // ===== Title =====
+  ctx.fillStyle = '#fde68a';
+  ctx.font = 'bold 20px Sarabun, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('ใบสั่งซื้อ', canvas.width / 2, 55);
 
-  const link = document.createElement('a');
-  link.download = `order_${p.code}.png`;
-  link.href = canvas.toDataURL();
-  link.click();
+  // ===== Load Image =====
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    ctx.drawImage(img, 80, 80, 200, 200);
 
-  document.querySelector('.modal-overlay')?.remove();
+    // ===== Text =====
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '16px Sarabun, sans-serif';
+    ctx.fillText(`สินค้า: ${p.name}`, 40, 320);
+    ctx.fillText(`รหัสสินค้า: ${p.code}`, 40, 350);
+    ctx.fillText(`จำนวนที่สั่ง: ${qty}`, 40, 380);
+
+    ctx.font = '14px Sarabun, sans-serif';
+    ctx.fillStyle = '#fde68a';
+    ctx.fillText(
+      `วันที่: ${new Date().toLocaleString('th-TH')}`,
+      40,
+      420
+    );
+
+    // ===== Download =====
+    const link = document.createElement('a');
+    link.download = `order_${p.code}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    document.querySelector('.modal-overlay')?.remove();
+  };
+
+  img.src = p.image || '';
+}
+
+/* ===== Helper: Rounded Rect ===== */
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
 }
 </script>
 
