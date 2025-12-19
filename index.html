@@ -154,7 +154,7 @@ button:hover,
 
 /* ===== ADMIN ACCENT ===== */
 .admin {
-  border-left: 4px solid var(--primary);
+  border-left: 4px solid var(--primary-gold);
 }
 
   /* ===== BRAND TITLE ===== */
@@ -464,7 +464,7 @@ button:hover,
 .modal-close {
   text-align: right;
   font-size: 0.8rem;
-  color: var(--primary);
+  color: var(--primary-gold);
   cursor: pointer;
 }
 
@@ -1672,16 +1672,15 @@ function getCategoryClass(category = '') {
     </div>
   </div>
 
-  <!-- 🧾 ORDER SLIP BUTTON -->
-<div
-  class="order-fab"
-  onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-  🧾
-</div>
-
+  ${state.role !== 'viewer' ? `
+    <div
+      class="order-fab"
+      onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+      🧾
+    </div>
+  ` : ''}
 `;
-
-
+  
     grid.appendChild(card);
   });
 
@@ -1821,18 +1820,16 @@ if (state.products.length === 0 && !state.loading) {
 
   root.appendChild(box);
 }
-  async function approveOrder(orderId) {
+ async function approveOrder(orderId) {
   const order = state.pendingOrders.find(o => o.id === orderId);
   if (!order) return;
 
-  // 🔐 กันสต๊อกไม่พอ
   const product = state.products.find(p => p.code === order.code);
   if (!product || product.stock < order.qty) {
     showToast('❌ สต๊อกไม่เพียงพอ', 'error');
     return;
   }
 
-  // ⛔ ยืนยันก่อนหักจริง
   showConfirm({
     title: 'ยืนยันหักสต๊อก',
     message: `
@@ -1842,26 +1839,28 @@ if (state.products.length === 0 && !state.loading) {
       </div>
     `,
     onConfirm: async () => {
-  try {
-    await apiUpdateStock(order.code, -order.qty);
+      try {
+        await apiUpdateStock(order.code, -order.qty);
 
-    product.stock -= order.qty;
-    product.updatedAt = Date.now();
+        product.stock -= order.qty;
+        product.updatedAt = Date.now();
 
-    state.pendingOrders =
-      state.pendingOrders.filter(o => o.id !== orderId);
-    localStorage.setItem(
-      'pendingOrders',
-      JSON.stringify(state.pendingOrders)
-    );
+        state.pendingOrders =
+          state.pendingOrders.filter(o => o.id !== orderId);
 
-    showToast('✅ หักสต๊อกเรียบร้อย');
-    renderUI();
-  } catch {
-    showToast('❌ หักสต๊อกไม่สำเร็จ', 'error');
-  }
+        localStorage.setItem(
+          'pendingOrders',
+          JSON.stringify(state.pendingOrders)
+        );
+
+        showToast('✅ หักสต๊อกเรียบร้อย');
+        renderUI();
+      } catch {
+        showToast('❌ หักสต๊อกไม่สำเร็จ', 'error');
+      }
+    }
+  });
 }
-
 
 function rejectOrder(orderId) {
   const ok = confirm('ลบใบสั่งซื้อนี้?');
