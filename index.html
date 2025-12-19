@@ -407,6 +407,29 @@ button:hover,
   padding: 0 !important;
 }  
 </style>
+
+    <style>
+/* =========================
+   STEP 2.8 — MOBILE GRID FIX
+   เหลือ 1 สินค้าต่อแถว (มือถือ)
+========================= */
+
+/* 📱 Mobile */
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+/* 💻 Tablet / Desktop (คงเดิม) */
+@media (min-width: 521px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
+
     
     <style>
 /* ===== PRODUCT DETAIL MODAL ===== */
