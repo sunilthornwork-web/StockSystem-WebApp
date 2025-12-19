@@ -1120,7 +1120,7 @@ function openOrderSlip(p) {
   document.body.appendChild(overlay);
 }
 
-function createOrderSlip(p) {
+async function createOrderSlip(p) {
   const qty = Number(document.getElementById('order-qty').value);
   const by = document.getElementById('order-by').value.trim();
   const note = document.getElementById('order-note').value.trim();
@@ -1129,12 +1129,10 @@ function createOrderSlip(p) {
     showToast('❌ กรุณาระบุชื่อผู้สั่ง', 'error');
     return;
   }
-
   if (!qty || qty <= 0) {
     showToast('❌ กรุณากรอกจำนวน', 'error');
     return;
   }
-
   if (qty > p.stock) {
     showToast('❌ สต๊อกไม่พอ', 'error');
     return;
@@ -1151,30 +1149,104 @@ function createOrderSlip(p) {
     createdAt: Date.now()
   };
 
-  // ✅ บันทึกใบสั่งซื้อ
+  // เก็บใบสั่งซื้อ (เหมือนเดิม)
   state.pendingOrders.push(order);
   localStorage.setItem('pendingOrders', JSON.stringify(state.pendingOrders));
 
-  // ✅ ดาวน์โหลดรูปสินค้าเข้าเครื่อง
-  if (p.image) {
-    downloadImage(
-      p.image,
-      `ORDER_${p.code}_${order.createdAt}.jpg`
-    );
-  }
+  // ✅ สร้างภาพใบสั่งซื้อ
+  await generateOrderSlipImage(order);
 
   document.querySelector('.modal-overlay')?.remove();
-  showToast('🧾 สร้างใบสั่งซื้อ + ดาวน์โหลดรูปแล้ว');
+  showToast('🧾 ดาวน์โหลดใบสั่งซื้อแล้ว');
 }
 
-/* ===== HELPER: DOWNLOAD IMAGE ===== */
-function downloadImage(url, filename) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+/* =========================
+   ORDER SLIP IMAGE (CANVAS)
+========================= */
+  async function ensureFontLoaded() {
+  if (document.fonts) {
+    await document.fonts.load('14px Sarabun');
+    await document.fonts.load('bold 22px Sarabun');
+  }
+}
+  
+async function generateOrderSlipImage(order) {
+  // ✅ รอให้ฟอนต์โหลดก่อน (สำคัญมาก)
+  await ensureFontLoaded();
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 360;
+  canvas.height = 560;
+
+  const ctx = canvas.getContext('2d');
+
+  /* ===== BG ===== */
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#7c3aed');
+  grad.addColorStop(1, '#3b0764');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  /* ===== CARD ===== */
+  roundRect(ctx, 20, 20, 320, 520, 22, true);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fill();
+
+  /* ===== TITLE ===== */
+  ctx.fillStyle = '#fde68a';
+  ctx.font = 'bold 22px Sarabun';
+  ctx.textAlign = 'center';
+  ctx.fillText('ใบสั่งซื้อ', canvas.width / 2, 58);
+
+  /* ===== IMAGE ===== */
+  if (order.image) {
+    const img = await loadImage(order.image);
+    ctx.drawImage(img, 90, 80, 180, 180);
+  }
+
+  /* ===== TEXT ===== */
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '14px Sarabun';
+
+  let y = 290;
+  ctx.fillText(`สินค้า: ${order.name}`, 40, y); y += 28;
+  ctx.fillText(`รหัสสินค้า: ${order.code}`, 40, y); y += 28;
+  ctx.fillText(`จำนวนที่สั่ง: ${order.qty}`, 40, y); y += 28;
+
+  ctx.fillStyle = '#fde68a';
+  ctx.fillText(
+    `วันที่: ${new Date(order.createdAt).toLocaleString('th-TH')}`,
+    40, y + 10
+  );
+
+  /* ===== DOWNLOAD ===== */
+  const link = document.createElement('a');
+  link.download = `ORDER_${order.code}_${order.createdAt}.png`;
+  link.href = canvas.toDataURL('image/png');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
+/* ===== LOAD IMAGE (CORS SAFE) ===== */
+async function loadImage(url) {
+  // 🔐 โหลดเป็น blob ก่อน เพื่อเลี่ยง CORS
+  const res = await fetch(url);
+  const blob = await res.blob();
+
+  const objectUrl = URL.createObjectURL(blob);
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(img);
+    };
+    img.onerror = reject;
+    img.src = objectUrl;
+  });
 }
 
 
