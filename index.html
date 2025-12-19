@@ -517,6 +517,38 @@ button:hover,
 
 </style>
 
+   <!-- =========================
+   STEP 2.10.1 — IMAGE FRAME RESTORE
+   คืนกรอบขาวโค้ง (แบบแรก)
+========================= -->
+<style>
+/* กรอบรูปหลัก */
+.product-img {
+  background-color: #ffffff !important; /* กรอบขาว */
+  padding: 12px;                        /* ⭐ หัวใจของกรอบ */
+  box-shadow: none !important;          /* ไม่ให้ลอย */
+}
+
+/* คุมรูปด้านใน */
+.product-img {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ปิด vignette หม่น */
+.product-img::after {
+  display: none !important;
+}
+
+  .product-img {
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,0.03);
+}
+
+</style>
+ 
+
     
     <style>
 /* ===== PRODUCT DETAIL MODAL ===== */
