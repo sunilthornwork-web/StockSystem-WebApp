@@ -690,10 +690,10 @@ if (savedOrders) {
 <!-- API FUNCTIONS -->
 <!-- ========================= -->
 <script>
-  async function apiRequest(action, payload = {}) {
+ async function apiRequest(action, payload = {}) {
   try {
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), 15000); // timeout 15s
+    setTimeout(() => controller.abort(), 15000);
 
     const res = await fetch(API_URL, {
       method: 'POST',
@@ -711,18 +711,28 @@ if (savedOrders) {
     return data.data;
 
   } catch (err) {
+    // ⏱️ timeout
     if (err.name === 'AbortError') {
-      showToast('⏱️ เซิร์ฟเวอร์ตอบช้า', 'error');
+      if (state.mode === 'admin' && !state.submittingAuth) {
+        showToast('⏱️ เซิร์ฟเวอร์ตอบช้า', 'error');
+      }
       return null;
     }
 
+    // 🔐 token หมด / logout แล้ว → เงียบ
     if (err.message === 'Unauthorized') {
       if (state.mode === 'admin') logoutAdmin();
       return null;
     }
 
+    // ❌ network error
     console.error(err);
-    showToast('❌ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้', 'error');
+
+    // 👉 แสดงเฉพาะตอน admin ใช้งานจริง
+    if (state.mode === 'admin' && !state.submittingAuth) {
+      showToast('❌ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้', 'error');
+    }
+
     return null;
   }
 }
