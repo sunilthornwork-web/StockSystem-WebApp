@@ -1793,12 +1793,15 @@ function openOrderSlip(p) {
   />
 
   <input
-    id="order-qty"
-    type="number"
-    min="1"
-    placeholder="จำนวนที่สั่ง"
-    style="width:100%;padding:12px;margin-bottom:12px;border-radius:12px;border:none;"
-  />
+  id="order-qty"
+  type="number"
+  min="1"
+  max="${p.stock}"
+  value="1"
+  placeholder="จำนวนที่สั่ง (สูงสุด ${p.stock})"
+  style="width:100%;padding:12px;margin-bottom:12px;border-radius:12px;border:none;"
+/>
+
 
   <button
   class="admin-stock-btn"
@@ -1911,11 +1914,105 @@ async function createOrderSlip(p) {
     JSON.stringify(state.pendingOrders)
   );
 
+  await generateMultiOrderSlipImage(order);
+    
   state.orderCart = [];
   showToast('🕓 รอ Admin อนุมัติ');
   renderUI();
 }
 
+/* =========================
+   MULTI ITEM ORDER SLIP (IMAGE)
+========================= */
+async function generateMultiOrderSlipImage(order) {
+  await ensureFontLoaded();
+
+  const itemHeight = 72;
+  const padding = 24;
+  const headerHeight = 140;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 360;
+  canvas.height =
+    headerHeight +
+    order.items.length * itemHeight +
+    120;
+
+  const ctx = canvas.getContext('2d');
+
+  /* ===== BACKGROUND ===== */
+  const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bg.addColorStop(0, '#f8dce6');
+  bg.addColorStop(1, '#b76e79');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  /* ===== CARD ===== */
+  roundRect(ctx, 16, 16, 328, canvas.height - 32, 22, true);
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.fill();
+
+  /* ===== TITLE ===== */
+  ctx.fillStyle = '#7a2e44';
+  ctx.font = 'bold 22px Sarabun';
+  ctx.textAlign = 'center';
+  ctx.fillText('ใบสั่งซื้อ', canvas.width / 2, 50);
+
+  ctx.font = '14px Sarabun';
+  ctx.fillText(`ผู้สั่ง: ${order.orderedBy}`, canvas.width / 2, 78);
+
+  /* ===== ITEMS ===== */
+  ctx.textAlign = 'left';
+  let y = headerHeight;
+
+  for (const item of order.items) {
+    // image
+    if (item.image) {
+      try {
+        const img = await loadImage(item.image);
+        ctx.drawImage(img, 32, y - 28, 48, 48);
+      } catch {}
+    }
+
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 14px Sarabun';
+    ctx.fillText(item.name, 92, y);
+
+    ctx.font = '13px Sarabun';
+    ctx.fillStyle = '#374151';
+    ctx.fillText(
+      `รหัส: ${item.code}  × ${item.qty}`,
+      92,
+      y + 20
+    );
+
+    y += itemHeight;
+  }
+
+  /* ===== FOOTER ===== */
+  ctx.fillStyle = '#7a2e44';
+  ctx.font = '12px Sarabun';
+  ctx.fillText(
+    `วันที่: ${new Date(order.createdAt).toLocaleString('th-TH')}`,
+    32,
+    canvas.height - 48
+  );
+
+  ctx.fillText(
+    'สถานะ: รอ Admin อนุมัติ',
+    32,
+    canvas.height - 28
+  );
+
+  /* ===== DOWNLOAD ===== */
+  const link = document.createElement('a');
+  link.download = `ORDER_${order.id}.png`;
+  link.href = canvas.toDataURL('image/png');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+  
 /* =========================
    ORDER SLIP IMAGE (CANVAS)
 ========================= */
@@ -2568,7 +2665,7 @@ function drawDashboardChart(history) {
     root.appendChild(renderProductGrid());
   }
 
-  function renderCart() {
+function renderCart() {
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="header">
@@ -2589,23 +2686,89 @@ function drawDashboardChart(history) {
   const card = document.createElement('div');
   card.className = 'card';
 
-  state.orderCart.forEach(i => {
+  state.orderCart.forEach((item, index) => {
     card.innerHTML += `
-      <div style="margin-bottom:8px">
-        <b>${i.name}</b><br/>
-        จำนวน: ${i.qty}
+      <div style="margin-bottom:14px">
+        <b>${item.name}</b>
+
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:8px;
+          margin-top:6px
+        ">
+          <!-- ปุ่มลด -->
+          <button onclick="changeCartQty(${index}, -1)">−</button>
+
+          <!-- พิมพ์จำนวนเอง -->
+          <input
+            type="number"
+            min="1"
+            value="${item.qty}"
+            style="width:70px;text-align:center"
+            oninput="setCartQty(${index}, this.value)"
+          />
+
+          <!-- ปุ่มเพิ่ม -->
+          <button onclick="changeCartQty(${index}, 1)">+</button>
+        </div>
       </div>
     `;
   });
 
   card.innerHTML += `
-    <input id="order-by" placeholder="ชื่อผู้สั่ง" />
-    <input id="order-note" placeholder="หมายเหตุ" />
-    <button onclick="submitOrderCart()">🧾 สร้างใบสั่งซื้อ</button>
+    <hr/>
+
+    <input
+      id="order-by"
+      placeholder="ชื่อผู้สั่ง / ร้าน / ลูกค้า"
+    />
+
+    <input
+      id="order-note"
+      placeholder="หมายเหตุ (ถ้ามี)"
+    />
+
+    <button
+      style="margin-top:10px;width:100%"
+      onclick="submitOrderCart()"
+    >
+      🧾 สร้างใบสั่งซื้อ
+    </button>
   `;
 
   app.appendChild(card);
 }
+
+/* =========================
+   Cart Qty Control (SAFE)
+========================= */
+function changeCartQty(index, diff) {
+  const item = state.orderCart[index];
+  if (!item) return;
+
+  const next = item.qty + diff;
+  if (next < 1) return;
+
+  item.qty = next;
+  renderCart();
+}
+
+function setCartQty(index, value) {
+  const qty = Number(value);
+  if (!qty || qty < 1) return;
+
+  const item = state.orderCart[index];
+  const product = state.products.find(p => p.code === item.code);
+
+  if (product && qty > product.stock) {
+    showToast('❌ จำนวนเกินสต๊อก', 'error');
+    return;
+  }
+
+  item.qty = qty;
+}
+
 
   /* =========================
    CATEGORY → COLOR CLASS
@@ -2699,7 +2862,7 @@ function getCategoryClass(category = '') {
 
       <div
   class="order-fab"
-  onclick="event.stopPropagation(); addToCart(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+  onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
   🧺
 </div>
 
