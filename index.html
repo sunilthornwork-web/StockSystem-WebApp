@@ -1850,9 +1850,18 @@ function openOrderSlip(p) {
   }
 
   showToast('🛒 เพิ่มเข้าตะกร้าแล้ว');
+  updateCartBadge(); // 🔔 อัปเดตทันที
 }
 
+/* =========================
+   REAL-TIME CART BADGE
+========================= */
+function updateCartBadge() {
+  const badge = document.querySelector('.header-actions .badge');
+  if (!badge) return;
 
+  badge.textContent = `🧺 (${state.orderCart.length})`;
+}
 /*  
 async function createOrderSlip(p) {
   const qty = Number(document.getElementById('order-qty').value);
@@ -1921,6 +1930,7 @@ async function createOrderSlip(p) {
   await generateMultiOrderSlipImage(order);
     
   state.orderCart = [];
+  updateCartBadge();
   showToast('🕓 รอ Admin อนุมัติ');
   renderUI();
 }
@@ -2635,6 +2645,7 @@ function drawDashboardChart(history) {
 `;
 
   root.appendChild(header);
+   updateCartBadge();
 
   if (state.loading) {
     root.appendChild(renderLoading());
@@ -2755,6 +2766,7 @@ function changeCartQty(index, diff) {
   if (next < 1) return;
 
   item.qty = next;
+  updateCartBadge();
   renderCart();
 }
 
