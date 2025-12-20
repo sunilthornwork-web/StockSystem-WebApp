@@ -1532,6 +1532,35 @@ const getVal = (id) => {
 <!-- ========================= -->
     <script>
 /* =========================
+   AUDIT LOG TRANSLATOR
+========================= */
+function translateAction(action) {
+  if (!action) return 'ไม่ทราบการกระทำ';
+
+  if (action.startsWith('updateStock')) return 'ปรับสต๊อกสินค้า';
+  if (action.startsWith('add')) return 'เพิ่มสินค้าใหม่';
+  if (action.startsWith('update')) return 'แก้ไขข้อมูลสินค้า';
+  if (action.startsWith('login')) return 'เข้าสู่ระบบ';
+  if (action.startsWith('logout')) return 'ออกจากระบบ';
+
+  return action; // fallback
+}
+
+function formatLogTime(time) {
+  if (!time) return 'ไม่พบวันเวลา';
+
+  const d = new Date(time);
+  if (isNaN(d.getTime())) return 'ไม่พบวันเวลา';
+
+  return d.toLocaleString('th-TH', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+}
+</script>
+
+    <script>
+/* =========================
    IMAGE PREVIEW LIGHTBOX
 ========================= */
 function openImagePreview(url) {
@@ -2922,14 +2951,19 @@ async function loadLogs() {
     const div = document.createElement('div');
     div.className = 'card';
     div.innerHTML = `
-      <b>${l.action}</b> — ${l.target || ''}<br/>
-      👤 ${l.user} (${l.role})<br/>
-      🕒 ${new Date(l.time).toLocaleString()}<br/>
-      <small>${l.detail || ''}</small>
-    `;
-    list.appendChild(div);
-  });
-}
+  <b>📌 ${translateAction(l.action)}</b><br/>
+
+  👤 ผู้ใช้: <b>${l.user}</b>
+  <span style="opacity:.7">(${l.role})</span><br/>
+
+  🕒 เวลา: ${formatLogTime(l.time)}<br/>
+
+  ${l.detail ? `
+    <small style="opacity:.8">
+      📝 รายละเอียด: ${l.detail}
+    </small>
+  ` : ''}
+`;
 
 
  /* =========================
