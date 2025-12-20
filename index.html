@@ -1754,69 +1754,73 @@ function showConfirm({ title, message, type = 'out', onConfirm }) {
 function openOrderSlip(p) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.onclick = () => overlay.remove();
+
+  // ✅ ปิดเฉพาะคลิกนอก modal
+  overlay.onclick = (e) => {
+    if (e.target === overlay) overlay.remove();
+  };
 
   const card = document.createElement('div');
   card.className = 'modal-card';
-  card.onclick = e => e.stopPropagation();
+
+  // ✅ กัน event ทะลุ
+  card.onclick = (e) => e.stopPropagation();
 
   card.innerHTML = `
-  <h3 style="margin-bottom:12px">🧾 ใบสั่งซื้อ</h3>
+    <h3 style="margin-bottom:12px">🧾 ใบสั่งซื้อ</h3>
 
-  <img
-  src="${p.image || ''}"
-  style="
-    width:100%;
-    aspect-ratio:1/1;
-    object-fit:contain;
-    border-radius:14px;
-    background:#020617;
-    margin-bottom:12px;
-  "
-/>
+    <img
+      src="${p.image || ''}"
+      style="
+        width:100%;
+        aspect-ratio:1/1;
+        object-fit:contain;
+        border-radius:14px;
+        background:#020617;
+        margin-bottom:12px;
+      "
+    />
 
-  <p><b>${p.name}</b></p>
-  <p style="font-size:0.8rem;color:#94a3b8">
-    รหัสสินค้า: ${p.code}
-  </p>
+    <p><b>${p.name}</b></p>
+    <p style="font-size:0.8rem;color:#94a3b8">
+      รหัสสินค้า: ${p.code}
+    </p>
 
-  <input
-    id="order-by"
-    placeholder="ชื่อผู้สั่ง / ร้าน / ลูกค้า"
-    style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:none;"
-  />
+    <input
+      id="order-by"
+      placeholder="ชื่อผู้สั่ง / ร้าน / ลูกค้า"
+    />
 
-  <input
-    id="order-note"
-    placeholder="หมายเหตุ (ถ้ามี)"
-    style="width:100%;padding:12px;margin-bottom:10px;border-radius:12px;border:none;"
-  />
+    <input
+      id="order-note"
+      placeholder="หมายเหตุ (ถ้ามี)"
+    />
 
-  <input
-  id="order-qty"
-  type="number"
-  min="1"
-  max="${p.stock}"
-  value="1"
-  placeholder="จำนวนที่สั่ง (สูงสุด ${p.stock})"
-  style="width:100%;padding:12px;margin-bottom:12px;border-radius:12px;border:none;"
-/>
+    <input
+      id="order-qty"
+      type="number"
+      min="1"
+      max="${p.stock}"
+      value="1"
+      placeholder="จำนวนที่สั่ง (สูงสุด ${p.stock})"
+    />
 
-
-  <button
-  class="admin-stock-btn"
-  style="width:100%"
-  onclick="
-    addToCart(${JSON.stringify(p).replace(/"/g,'&quot;')});
-    document.querySelector('.modal-overlay')?.remove();
-  ">
-  🧺 เพิ่มเข้าตะกร้า
-</button>
-`;
+    <button
+      class="admin-stock-btn"
+      style="width:100%"
+      onclick="
+        addToCart(${JSON.stringify(p).replace(/"/g,'&quot;')});
+        document.querySelector('.modal-overlay')?.remove();
+      "
+    >
+      🧺 เพิ่มเข้าตะกร้า
+    </button>
+  `;
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 }
+
 
   function addToCart(product) {
   const qtyInput = document.getElementById('order-qty');
