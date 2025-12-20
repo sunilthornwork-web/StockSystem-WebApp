@@ -1027,7 +1027,8 @@ const state = {
   products: [],
   filteredProducts: [],
   pendingOrders: [],
-
+  orderCart: [],       // ✅ เพิ่มบรรทัดนี้
+ 
   search: '',
   category: 'all',
 
@@ -1038,8 +1039,9 @@ const state = {
   submittingStock: false,
   submittingAuth: false,
 
-productsLoaded: false
+  productsLoaded: false
 };
+
 </script>
 
 <script>
@@ -1799,17 +1801,52 @@ function openOrderSlip(p) {
   />
 
   <button
-    class="admin-stock-btn"
-    style="width:100%"
-    onclick="createOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-    📄 สร้างใบสั่งซื้อ
-  </button>
+  class="admin-stock-btn"
+  style="width:100%"
+  onclick="
+    addToCart(${JSON.stringify(p).replace(/"/g,'&quot;')});
+    document.querySelector('.modal-overlay')?.remove();
+  ">
+  🧺 เพิ่มเข้าตะกร้า
+</button>
 `;
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 }
 
+  function addToCart(product) {
+  const qtyInput = document.getElementById('order-qty');
+  const qty = qtyInput ? Number(qtyInput.value || 1) : 1;
+
+  if (qty <= 0) {
+    showToast('❌ จำนวนไม่ถูกต้อง', 'error');
+    return;
+  }
+
+  if (qty > product.stock) {
+  showToast('❌ จำนวนเกินสต๊อก', 'error');
+  return;
+  }  
+
+  const exist = state.orderCart.find(i => i.code === product.code);
+
+  if (exist) {
+    exist.qty += qty;
+  } else {
+    state.orderCart.push({
+      code: product.code,
+      name: product.name,
+      image: product.image || '',
+      qty
+    });
+  }
+
+  showToast('🛒 เพิ่มเข้าตะกร้าแล้ว');
+}
+
+
+/*  
 async function createOrderSlip(p) {
   const qty = Number(document.getElementById('order-qty').value);
   const by = document.getElementById('order-by').value.trim();
@@ -1848,6 +1885,35 @@ async function createOrderSlip(p) {
 
   document.querySelector('.modal-overlay')?.remove();
   showToast('🧾 ดาวน์โหลดใบสั่งซื้อแล้ว');
+}
+*/
+  function submitOrderCart() {
+  const orderedBy = document.getElementById('order-by').value.trim();
+  const note = document.getElementById('order-note').value.trim();
+
+  if (!orderedBy) {
+    showToast('❌ กรุณาระบุชื่อผู้สั่ง', 'error');
+    return;
+  }
+
+  const order = {
+    id: 'ORD-' + Date.now(),
+    orderedBy,
+    note,
+    status: 'pending', // ✅ สำคัญ
+    items: [...state.orderCart],
+    createdAt: Date.now()
+  };
+
+  state.pendingOrders.push(order);
+  localStorage.setItem(
+    'pendingOrders',
+    JSON.stringify(state.pendingOrders)
+  );
+
+  state.orderCart = [];
+  showToast('🕓 รอ Admin อนุมัติ');
+  renderUI();
 }
 
 /* =========================
@@ -2448,30 +2514,43 @@ function drawDashboardChart(history) {
      VIEWER
   ========================= */
 
-  async function renderViewer(root) {
-    const header = document.createElement('div');
-header.className = 'header';
-header.innerHTML = `
+ async function renderViewer(root) {
+  const header = document.createElement('div');
+  header.className = 'header';
+
+  header.innerHTML = `
   <div class="brand-title">
-    ⭐ ล้อพาณิชย์ ⭐
+    ล้อพาณิชย์ ✨
   </div>
+
   <div class="header-actions">
+    <button class="badge" onclick="renderCart()">
+      🧺 (${state.orderCart.length})
+    </button>
+
     <button class="badge" onclick="toggleTheme()">🌙</button>
     <button class="badge" onclick="renderAdminLogin()">Admin</button>
   </div>
 `;
-root.appendChild(header);
 
-    if (state.loading) return root.appendChild(renderLoading());
-    if (state.error && state.mode !== 'viewer') {
-  return root.appendChild(renderError());
-}
-    if (!state.productsLoaded) {
-  await loadProducts();
-  return;
-}
- 
+  root.appendChild(header);
 
+  if (state.loading) {
+    root.appendChild(renderLoading());
+    return;
+  }
+
+  if (state.error && state.mode === 'viewer') {
+    root.appendChild(renderError());
+    return;
+  }
+
+  if (!state.productsLoaded) {
+    await loadProducts();
+    return;
+  }
+
+  
     const searchCard = document.createElement('div');
     searchCard.className = 'card';
     searchCard.innerHTML = `
@@ -2488,6 +2567,45 @@ root.appendChild(header);
     root.appendChild(searchCard);
     root.appendChild(renderProductGrid());
   }
+
+  function renderCart() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="header">
+      <h1>🧺 ตะกร้าสินค้า</h1>
+      <button class="badge" onclick="renderUI()">Back</button>
+    </div>
+  `;
+
+  if (!state.orderCart.length) {
+    app.innerHTML += `
+      <div class="card">
+        <p>ยังไม่มีสินค้าในตะกร้า</p>
+      </div>
+    `;
+    return;
+  }
+
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  state.orderCart.forEach(i => {
+    card.innerHTML += `
+      <div style="margin-bottom:8px">
+        <b>${i.name}</b><br/>
+        จำนวน: ${i.qty}
+      </div>
+    `;
+  });
+
+  card.innerHTML += `
+    <input id="order-by" placeholder="ชื่อผู้สั่ง" />
+    <input id="order-note" placeholder="หมายเหตุ" />
+    <button onclick="submitOrderCart()">🧾 สร้างใบสั่งซื้อ</button>
+  `;
+
+  app.appendChild(card);
+}
 
   /* =========================
    CATEGORY → COLOR CLASS
@@ -2580,10 +2698,11 @@ function getCategoryClass(category = '') {
       </div>
 
       <div
-        class="order-fab"
-        onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-        🧾
-      </div>
+  class="order-fab"
+  onclick="event.stopPropagation(); addToCart(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+  🧺
+</div>
+
     `;
 
     grid.appendChild(card);
@@ -2687,14 +2806,17 @@ function getCategoryClass(category = '') {
         </div>
 
         <div style="flex:1;font-size:.85rem">
-          <b>${o.name}</b><br/>
-          รหัส: ${o.code}<br/>
-          จำนวน: <b>${o.qty}</b><br/>
-          👤 ผู้สั่ง: <b>${o.orderedBy}</b><br/>
-          ${o.note ? `📝 ${o.note}<br/>` : ''}
-          🕒 ${new Date(o.createdAt).toLocaleString('th-TH')}
-        </div>
-      </div>
+  👤 ผู้สั่ง: <b>${o.orderedBy}</b><br/>
+  ${o.note ? `📝 ${o.note}<br/>` : ''}
+  🕒 ${new Date(o.createdAt).toLocaleString('th-TH')}<br/><br/>
+
+  <b>📦 รายการสินค้า:</b><br/>
+  ${Array.isArray(o.items)
+  ? o.items.map(it => `• ${it.name} (${it.code}) × <b>${it.qty}</b>`).join('<br/>')
+  : '<i>⚠️ รูปแบบใบสั่งซื้อเก่า</i>'
+}
+ </div>
+</div>
 
       <div style="display:flex;gap:8px;margin-top:8px">
         <button
@@ -2720,26 +2842,51 @@ function getCategoryClass(category = '') {
   const order = state.pendingOrders.find(o => o.id === orderId);
   if (!order) return;
 
-  const product = state.products.find(p => p.code === order.code);
-  if (!product || product.stock < order.qty) {
-    showToast('❌ สต๊อกไม่เพียงพอ', 'error');
-    return;
+  /* =========================
+     STEP 7.1 — ตรวจสต๊อกทุกชิ้นก่อน
+  ========================= */
+  for (const item of order.items) {
+    const product = state.products.find(p => p.code === item.code);
+    if (!product || product.stock < item.qty) {
+      showToast(
+        `❌ สต๊อกไม่พอ: ${item.name}`,
+        'error'
+      );
+      return;
+    }
   }
 
+  /* =========================
+     STEP 7.2 — ยืนยันจาก Admin
+  ========================= */
   showConfirm({
-    title: 'ยืนยันหักสต๊อก',
+    title: 'ยืนยันอนุมัติใบสั่งซื้อ',
     message: `
       <div style="text-align:center">
-        สินค้า <b>${order.name}</b><br/>
-        จำนวน <b>${order.qty}</b> ชิ้น
+        ใบสั่งซื้อ <b>${order.id}</b><br/>
+        จำนวน ${order.items.length} รายการ
       </div>
     `,
     onConfirm: async () => {
       try {
-        await apiUpdateStock(order.code, -order.qty);
 
-        product.stock -= order.qty;
-        product.updatedAt = Date.now();
+        /* =========================
+           STEP 7.3 — หักสต๊อกทีละสินค้า
+        ========================= */
+        for (const item of order.items) {
+          await apiUpdateStock(item.code, -item.qty);
+
+          const p = state.products.find(p => p.code === item.code);
+          if (p) {
+            p.stock -= item.qty;
+            p.updatedAt = Date.now();
+          }
+        }
+
+        /* =========================
+           STEP 7.4 — เปลี่ยนสถานะ + ลบจาก pending
+        ========================= */
+        order.status = 'approved';
 
         state.pendingOrders =
           state.pendingOrders.filter(o => o.id !== orderId);
@@ -2749,14 +2896,17 @@ function getCategoryClass(category = '') {
           JSON.stringify(state.pendingOrders)
         );
 
-        showToast('✅ หักสต๊อกเรียบร้อย');
+        showToast('✅ อนุมัติและหักสต๊อกเรียบร้อย');
         renderUI();
-      } catch {
-        showToast('❌ หักสต๊อกไม่สำเร็จ', 'error');
+
+      } catch (e) {
+        console.error(e);
+        showToast('❌ เกิดข้อผิดพลาดระหว่างหักสต๊อก', 'error');
       }
     }
   });
 }
+
 
 function rejectOrder(orderId) {
   const ok = confirm('ลบใบสั่งซื้อนี้?');
