@@ -2135,16 +2135,18 @@ async function adjustStock(code, diff) {
 }
   
   async function loadProducts() {
+  if (state.productsLoaded) return; // ✅ กันโหลดซ้ำ
+
   state.loading = true;
   renderUI();
 
   const data = await apiListProducts();
-  if (data) {
-    state.products = data;
-    applyFilter();
-  }
+
+  state.products = Array.isArray(data) ? data : [];
+  applyFilter();
 
   state.loading = false;
+  state.productsLoaded = true; // ✅ สำคัญที่สุด
   renderUI();
 }
 
@@ -2436,10 +2438,10 @@ root.appendChild(header);
     if (state.error && state.mode !== 'viewer') {
   return root.appendChild(renderError());
 }
-    if (state.products.length === 0) {
-      await loadProducts();
-      return;
-    }
+    if (!state.productsLoaded) {
+  await loadProducts();
+  return;
+}
  
 
     const searchCard = document.createElement('div');
