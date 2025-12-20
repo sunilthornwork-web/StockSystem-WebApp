@@ -1853,15 +1853,7 @@ function openOrderSlip(p) {
   updateCartBadge(); // 🔔 อัปเดตทันที
 }
 
-/* =========================
-   REAL-TIME CART BADGE
-========================= */
-function updateCartBadge() {
-  const badge = document.querySelector('.header-actions .badge');
-  if (!badge) return;
 
-  badge.textContent = `🧺 (${state.orderCart.length})`;
-}
 /*  
 async function createOrderSlip(p) {
   const qty = Number(document.getElementById('order-qty').value);
@@ -1903,7 +1895,7 @@ async function createOrderSlip(p) {
   showToast('🧾 ดาวน์โหลดใบสั่งซื้อแล้ว');
 }
 */
-  function submitOrderCart() {
+ async function submitOrderCart() {
   const orderedBy = document.getElementById('order-by').value.trim();
   const note = document.getElementById('order-note').value.trim();
 
@@ -2340,7 +2332,7 @@ async function adjustStock(code, diff) {
 }
   
   async function loadProducts() {
-  if (state.productsLoaded) return; // ✅ กันโหลดซ้ำ
+  if (state.productsLoaded) return;
 
   state.loading = true;
   renderUI();
@@ -2348,13 +2340,11 @@ async function adjustStock(code, diff) {
   const data = await apiListProducts();
 
   state.products = Array.isArray(data) ? data : [];
-  applyFilter();
+  state.filteredProducts = [...state.products];
 
   state.loading = false;
-  state.productsLoaded = true; // ✅ สำคัญที่สุด
-  renderUI();
+  state.productsLoaded = true; // 🔒 ล็อกตรงนี้ให้จบ
 }
-
 
   function applyFilter() {
     state.filteredProducts = state.products.filter(p => {
@@ -2621,6 +2611,15 @@ function drawDashboardChart(history) {
     `;
   }
 }
+
+  /* =========================
+   REAL-TIME CART BADGE
+========================= */
+function updateCartBadge() {
+  const badge = document.querySelector('.cart-badge');
+  if (!badge) return;
+  badge.textContent = `🧺 (${state.orderCart.length})`;
+}
   /* =========================
      VIEWER
   ========================= */
@@ -2635,9 +2634,9 @@ function drawDashboardChart(history) {
   </div>
 
   <div class="header-actions">
-    <button class="badge" onclick="renderCart()">
-      🧺 (${state.orderCart.length})
-    </button>
+    <button class="badge cart-badge" onclick="renderCart()">
+  🧺 (0)
+</button>
 
     <button class="badge" onclick="toggleTheme()">🌙</button>
     <button class="badge" onclick="renderAdminLogin()">Admin</button>
@@ -2782,7 +2781,9 @@ function setCartQty(index, value) {
     return;
   }
 
-  item.qty = qty;
+    item.qty = qty;
+updateCartBadge();
+renderCart();
 }
 
 
@@ -2839,55 +2840,61 @@ function getCategoryClass(category = '') {
   // NORMAL GRID (เหมือนเดิม)
   // =========================
   const grid = document.createElement('div');
-  grid.className = 'grid';
+grid.className = 'grid';
 
-  state.filteredProducts.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    card.onclick = () => openProductDetail(p);
+state.filteredProducts.forEach(p => {
+  const card = document.createElement('div');
+  card.className = 'product-card';
+  card.onclick = () => openProductDetail(p);
 
-    const cls = getCategoryClass(p.category);
+  const cls = getCategoryClass(p.category);
 
-    card.innerHTML = `
-      <div class="product-img"
-        style="background-image:url('${p.image || ''}');">
+  // ✅ HTML อย่างเดียว
+  card.innerHTML = `
+    <div class="product-img"
+      style="background-image:url('${p.image || ''}');">
+    </div>
+
+    <div class="product-name">${p.name}</div>
+
+    <div class="product-code ${cls}">
+      🆔 ${p.code}
+    </div>
+
+    <div class="product-category ${cls}">
+      🏷️ ${p.category}
+    </div>
+
+    <div class="product-price">
+      💰 ฿${p.price}
+    </div>
+
+    <div class="product-meta">
+      <div class="meta-pill">
+        📦 คงเหลือ ${p.stock}
       </div>
-
-      <div class="product-name">${p.name}</div>
-
-      <div class="product-code ${cls}">
-        🆔 ${p.code}
+      <div class="meta-pill">
+        🚚 ${p.status || '-'}
       </div>
+    </div>
+  `;
 
-      <div class="product-category ${cls}">
-        🏷️ ${p.category}
-      </div>
+  // ✅ สร้างปุ่ม 🧺 ด้วย JS (ถูกที่)
+  const fab = document.createElement('div');
+  fab.className = 'order-fab';
+  fab.textContent = '🧺';
 
-     <div class="product-price">
-  💰 ฿${p.price}
-</div>
-
-      <div class="product-meta">
-        <div class="meta-pill">
-          📦 คงเหลือ ${p.stock}
-        </div>
-        <div class="meta-pill">
-          🚚 ${p.status || '-'}
-        </div>
-      </div>
-
-      <div
-  class="order-fab"
-  onclick="event.stopPropagation(); openOrderSlip(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-  🧺
-</div>
-
-    `;
-
-    grid.appendChild(card);
+  fab.addEventListener('click', (e) => {
+    e.stopPropagation();     // 🔒 กันคลิกทะลุการ์ด
+    openOrderSlip(p);        // 🧾 เปิดใบสั่งซื้อ
   });
 
-  return grid;
+  card.appendChild(fab);
+  grid.appendChild(card);
+});
+
+return grid;
+
 }
 
 
