@@ -2334,6 +2334,8 @@ async function adjustStock(code, diff) {
 
   state.loading = false;
   state.productsLoaded = true; // 🔒 ล็อกตรงนี้ให้จบ
+    
+  renderUI(); // ✅ ⬅️ บรรทัดสำคัญที่สุด
 }
 
   function applyFilter() {
