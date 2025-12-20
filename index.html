@@ -2261,15 +2261,13 @@ function onSearch(value) {
 }
 
 function renderProductGridOnly() {
-  const container =
-    document.querySelector('.grid') ||
-    document.querySelector('.card'); // รองรับ empty state
+  const area = document.getElementById('product-area');
+  if (!area) return;
 
-  if (!container) return;
-
-  const newView = renderProductGrid();
-  container.replaceWith(newView);
+  area.innerHTML = '';                 // 🧹 ล้างทุกอย่าง
+  area.appendChild(renderProductGrid()); // ➕ ใส่ใหม่
 }
+
 </script>
     
 <script>
@@ -2718,7 +2716,11 @@ function updateCartBadge() {
       </select>
     `;
     root.appendChild(searchCard);
-    root.appendChild(renderProductGrid());
+    const productArea = document.createElement('div');
+productArea.id = 'product-area';
+
+productArea.appendChild(renderProductGrid());
+root.appendChild(productArea);
   }
 
 function renderCart() {
