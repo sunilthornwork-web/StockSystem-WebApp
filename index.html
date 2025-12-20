@@ -1464,7 +1464,7 @@ async function changeUserRole(username, role) {
 
     <!-- ===== IMAGE UPLOAD ===== -->
 <script>
-  async function apiUploadImage(file) {
+async function apiUploadImage(file, oldImageUrl = '') {
   try {
     const base64 = await fileToBase64(file);
 
@@ -1477,7 +1477,10 @@ async function changeUserRole(username, role) {
         payload: {
           filename: file.name,
           mimeType: file.type,
-          data: base64
+          data: base64,
+
+          // ✅ สำคัญที่สุด
+          oldImageUrl: oldImageUrl || ''
         }
       })
     });
@@ -1492,15 +1495,8 @@ async function changeUserRole(username, role) {
     return null;
   }
 }
-
-  function fileToBase64(file) {
-    return new Promise(res => {
-      const reader = new FileReader();
-      reader.onload = () => res(reader.result.split(',')[1]);
-      reader.readAsDataURL(file);
-    });
-  }
 </script>
+
 
     <!-- ===== PRODUCTION HELPERS ===== -->
 <script>
@@ -2821,7 +2817,12 @@ async function submitProduct(isEdit = false) {
 
     const file = document.getElementById('p-image')?.files?.[0];
     if (file) {
-      const imageUrl = await apiUploadImage(file);
+      const oldImage =
+  isEdit
+    ? state.products.find(p => p.code === code)?.image || ''
+    : '';
+
+const imageUrl = await apiUploadImage(file, oldImage);
       if (!imageUrl) throw new Error('อัปโหลดรูปไม่สำเร็จ');
       product.image = imageUrl;
     } else if (isEdit) {
