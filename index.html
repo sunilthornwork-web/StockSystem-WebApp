@@ -1846,13 +1846,10 @@ function openOrderSlip(p) {
 
 
     <button
-      class="admin-stock-btn"
-      style="width:100%"
-      onclick="
-        addToCart(${JSON.stringify(p).replace(/"/g,'&quot;')});
-        overlay.remove();
-      "
-    >
+  class="admin-stock-btn"
+  style="width:100%"
+  onclick="confirmAddToCart(${JSON.stringify(p).replace(/"/g,'&quot;')})"
+>
       🧺 เพิ่มเข้าตะกร้า
     </button>
   `;
@@ -1866,16 +1863,18 @@ function openOrderSlip(p) {
   const qtyInput = document.getElementById('order-qty');
   const qty = qtyInput ? Number(qtyInput.value || 1) : 1;
 
+  // ❌ ตรวจจำนวน
   if (qty <= 0) {
     showToast('❌ จำนวนไม่ถูกต้อง', 'error');
     return;
   }
 
   if (qty > product.stock) {
-  showToast('❌ จำนวนเกินสต๊อก', 'error');
-  return;
-  }  
+    showToast('❌ จำนวนเกินสต๊อก', 'error');
+    return;
+  }
 
+  // 🛒 เช็กว่ามีในตะกร้าแล้วหรือยัง
   const exist = state.orderCart.find(i => i.code === product.code);
 
   if (exist) {
@@ -1889,10 +1888,14 @@ function openOrderSlip(p) {
     });
   }
 
+  // 🔔 แจ้งเตือน + badge
   showToast('🛒 เพิ่มเข้าตะกร้าแล้ว');
-  updateCartBadge(); // 🔔 อัปเดตทันที
-}
+  updateCartBadge();
 
+  // ✅ ปิด modal หลังสำเร็จ (UX ดี)
+  const overlay = document.querySelector('.modal-overlay');
+  if (overlay) overlay.remove();
+}
 
 /*  
 async function createOrderSlip(p) {
@@ -2745,8 +2748,27 @@ function renderCart() {
   card.className = 'card';
 
   state.orderCart.forEach((item, index) => {
-    card.innerHTML += `
-      <div style="margin-bottom:14px">
+  card.innerHTML += `
+    <div style="
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-bottom:16px;
+    ">
+
+      <!-- 🖼 รูปสินค้า -->
+      <div style="
+        width:64px;
+        height:64px;
+        border-radius:12px;
+        background:url('${item.image || ''}') center/contain no-repeat;
+        background-color:rgba(255,255,255,0.35);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+        flex-shrink:0;
+      "></div>
+
+      <!-- 📦 ข้อมูล + คุมจำนวน -->
+      <div style="flex:1">
         <b>${item.name}</b>
 
         <div style="
@@ -2755,24 +2777,23 @@ function renderCart() {
           gap:8px;
           margin-top:6px
         ">
-          <!-- ปุ่มลด -->
           <button onclick="changeCartQty(${index}, -1)">−</button>
 
-          <!-- พิมพ์จำนวนเอง -->
           <input
             type="number"
             min="1"
             value="${item.qty}"
-            style="width:70px;text-align:center"
+            style="width:64px;text-align:center"
             oninput="setCartQty(${index}, this.value)"
           />
 
-          <!-- ปุ่มเพิ่ม -->
           <button onclick="changeCartQty(${index}, 1)">+</button>
         </div>
       </div>
-    `;
-  });
+
+    </div>
+  `;
+});
 
   card.innerHTML += `
     <hr/>
