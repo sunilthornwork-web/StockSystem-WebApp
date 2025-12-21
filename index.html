@@ -1194,6 +1194,7 @@ if (savedOrders) {
     state.error = null;
 
     sessionExpiredHandled = false;
+    state.productsLoaded = false;
     renderUI();
   } finally {
     state.submittingAuth = false;
@@ -2980,7 +2981,26 @@ return grid;
 
   renderPendingOrders(root);
 
-  if (!state.products.length) {
+/* =========================
+   ADMIN PRODUCT LOAD GUARD
+========================= */
+
+// ⏳ ยังโหลดไม่เสร็จ
+if (!state.productsLoaded) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML = `
+    <p>⏳ กำลังโหลดสินค้า...</p>
+  `;
+  root.appendChild(div);
+
+  // 🔁 ดึงข้อมูลถ้ายังไม่โหลด
+  loadProducts();
+  return;
+}
+
+// 📭 โหลดเสร็จแล้ว แต่ไม่มีสินค้า
+if (state.productsLoaded && state.products.length === 0) {
   const div = document.createElement('div');
   div.className = 'card';
   div.innerHTML = `
